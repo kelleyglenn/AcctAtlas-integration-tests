@@ -1,0 +1,23 @@
+{
+  "name": "acctatlas-integration-tests",
+  "version": "1.0.0",
+  "description": "E2E and API integration tests for AccountabilityAtlas",
+  "scripts": {
+    "test:e2e": "playwright test --config=e2e/playwright.config.ts",
+    "test:e2e:headed": "playwright test --config=e2e/playwright.config.ts --headed",
+    "test:e2e:ui": "playwright test --config=e2e/playwright.config.ts --ui",
+    "test:e2e:debug": "playwright test --config=e2e/playwright.config.ts --debug",
+    "report": "playwright show-report e2e/playwright-report"
+  },
+  "keywords": [
+    "e2e",
+    "playwright",
+    "integration-tests"
+  ],
+  "author": "",
+  "license": "MIT",
+  "devDependencies": {
+    "@playwright/test": "^1.58.2",
+    "typescript": "^5.9.3"
+  }
+}
