@@ -22,9 +22,41 @@ jobs:
           repository: kelleyglenn/AccountabilityAtlas
           path: infra
 
+      - name: Checkout user-service
+        uses: actions/checkout@v4
+        with:
+          repository: kelleyglenn/AcctAtlas-user-service
+          path: infra/AcctAtlas-user-service
+
+      - name: Checkout api-gateway
+        uses: actions/checkout@v4
+        with:
+          repository: kelleyglenn/AcctAtlas-api-gateway
+          path: infra/AcctAtlas-api-gateway
+
+      - name: Checkout web-app
+        uses: actions/checkout@v4
+        with:
+          repository: kelleyglenn/AcctAtlas-web-app
+          path: infra/AcctAtlas-web-app
+
+      - name: Set up Java
+        uses: actions/setup-java@v4
+        with:
+          distribution: 'temurin'
+          java-version: '21'
+
+      - name: Build user-service image
+        working-directory: infra/AcctAtlas-user-service
+        run: ./gradlew jibDockerBuild
+
+      - name: Build api-gateway image
+        working-directory: infra/AcctAtlas-api-gateway
+        run: ./gradlew jibDockerBuild
+
       - name: Start services
         working-directory: infra
-        run: docker compose --profile backend up -d --wait
+        run: docker compose --profile backend --profile frontend up -d --wait
 
       - name: Setup Node
         uses: actions/setup-node@v4
@@ -66,4 +98,4 @@ jobs:
       - name: Stop services
         if: always()
         working-directory: infra
-        run: docker compose --profile backend down
+        run: docker compose --profile backend --profile frontend down
