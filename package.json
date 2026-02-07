@@ -2,12 +2,15 @@
   "name": "acctatlas-integration-tests",
   "version": "1.0.0",
   "description": "E2E and API integration tests for AccountabilityAtlas",
+  "type": "module",
   "scripts": {
     "test:e2e": "playwright test --config=e2e/playwright.config.ts",
     "test:e2e:headed": "playwright test --config=e2e/playwright.config.ts --headed",
     "test:e2e:ui": "playwright test --config=e2e/playwright.config.ts --ui",
     "test:e2e:debug": "playwright test --config=e2e/playwright.config.ts --debug",
-    "report": "playwright show-report e2e/playwright-report"
+    "report": "playwright show-report e2e/playwright-report",
+    "lint": "eslint .",
+    "lint:fix": "eslint . --fix"
   },
   "keywords": [
     "e2e",
@@ -18,6 +21,11 @@
   "license": "MIT",
   "devDependencies": {
     "@playwright/test": "^1.58.2",
-    "typescript": "^5.9.3"
+    "@typescript-eslint/eslint-plugin": "^8.54.0",
+    "@typescript-eslint/parser": "^8.54.0",
+    "eslint": "^9.39.2",
+    "eslint-plugin-playwright": "^2.5.1",
+    "typescript": "^5.9.3",
+    "typescript-eslint": "^8.54.0"
   }
 }

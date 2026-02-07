@@ -6,3 +6,6 @@ api/playwright-report/
 api/test-results/
 .env
 .env.local
+
+# IDEs
+/.idea/
