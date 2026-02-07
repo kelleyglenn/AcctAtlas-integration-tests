@@ -14,6 +14,7 @@ End-to-end and API integration tests for [AccountabilityAtlas](https://github.co
 - **Framework:** [Playwright](https://playwright.dev/)
 - **Language:** TypeScript
 - **Browsers:** Chromium, Firefox, WebKit
+- **Linting:** ESLint with [eslint-plugin-playwright](https://github.com/playwright-community/eslint-plugin-playwright)
 - **CI:** GitHub Actions
 
 ## Prerequisites
@@ -43,7 +44,14 @@ npm run test:e2e:ui           # Run with Playwright UI
 npm run test:e2e:debug        # Run with debugger
 ```
 
-### 3. View test report
+### 3. Lint the code
+
+```bash
+npm run lint                  # Check for linting errors
+npm run lint:fix              # Auto-fix linting errors
+```
+
+### 4. View test report
 
 ```bash
 npm run report
