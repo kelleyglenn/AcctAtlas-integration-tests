@@ -24,7 +24,7 @@ jobs:
 
       - name: Start services
         working-directory: infra
-        run: docker-compose up -d --wait
+        run: docker compose up -d --wait
 
       - name: Setup Node
         uses: actions/setup-node@v4
@@ -66,4 +66,4 @@ jobs:
       - name: Stop services
         if: always()
         working-directory: infra
-        run: docker-compose down
+        run: docker compose down
