@@ -11,6 +11,11 @@ jobs:
   e2e:
     runs-on: ubuntu-latest
     timeout-minutes: 30
+    outputs:
+      integration-tests-sha: ${{ github.sha }}
+      user-service-sha: ${{ steps.checkout-user.outputs.commit }}
+      api-gateway-sha: ${{ steps.checkout-gateway.outputs.commit }}
+      web-app-sha: ${{ steps.checkout-webapp.outputs.commit }}
 
     steps:
       - name: Checkout integration tests
@@ -23,18 +28,21 @@ jobs:
           path: infra
 
       - name: Checkout user-service
+        id: checkout-user
         uses: actions/checkout@v4
         with:
           repository: kelleyglenn/AcctAtlas-user-service
           path: infra/AcctAtlas-user-service
 
       - name: Checkout api-gateway
+        id: checkout-gateway
         uses: actions/checkout@v4
         with:
           repository: kelleyglenn/AcctAtlas-api-gateway
           path: infra/AcctAtlas-api-gateway
 
       - name: Checkout web-app
+        id: checkout-webapp
         uses: actions/checkout@v4
         with:
           repository: kelleyglenn/AcctAtlas-web-app
@@ -99,3 +107,81 @@ jobs:
         if: always()
         working-directory: infra
         run: docker compose --profile backend --profile frontend down
+
+  tag-on-success:
+    runs-on: ubuntu-latest
+    needs: [e2e]
+    if: success() && github.event_name == 'push'
+
+    steps:
+      - name: Log tested commits
+        run: |
+          echo "## Tested Commits" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "| Repo | Commit |" >> $GITHUB_STEP_SUMMARY
+          echo "|------|--------|" >> $GITHUB_STEP_SUMMARY
+          echo "| integration-tests | [${INTEGRATION_SHA:0:7}](https://github.com/kelleyglenn/AcctAtlas-integration-tests/commit/$INTEGRATION_SHA) |" >> $GITHUB_STEP_SUMMARY
+          echo "| user-service | [${USER_SHA:0:7}](https://github.com/kelleyglenn/AcctAtlas-user-service/commit/$USER_SHA) |" >> $GITHUB_STEP_SUMMARY
+          echo "| api-gateway | [${GATEWAY_SHA:0:7}](https://github.com/kelleyglenn/AcctAtlas-api-gateway/commit/$GATEWAY_SHA) |" >> $GITHUB_STEP_SUMMARY
+          echo "| web-app | [${WEBAPP_SHA:0:7}](https://github.com/kelleyglenn/AcctAtlas-web-app/commit/$WEBAPP_SHA) |" >> $GITHUB_STEP_SUMMARY
+        env:
+          INTEGRATION_SHA: ${{ needs.e2e.outputs.integration-tests-sha }}
+          USER_SHA: ${{ needs.e2e.outputs.user-service-sha }}
+          GATEWAY_SHA: ${{ needs.e2e.outputs.api-gateway-sha }}
+          WEBAPP_SHA: ${{ needs.e2e.outputs.web-app-sha }}
+
+      - name: Create tags
+        env:
+          GH_TOKEN: ${{ secrets.INTEGRATION_TEST_PAT }}
+          INTEGRATION_SHA: ${{ needs.e2e.outputs.integration-tests-sha }}
+          USER_SHA: ${{ needs.e2e.outputs.user-service-sha }}
+          GATEWAY_SHA: ${{ needs.e2e.outputs.api-gateway-sha }}
+          WEBAPP_SHA: ${{ needs.e2e.outputs.web-app-sha }}
+        run: |
+          TAG_NAME="integration-tested-$(date +%Y%m%d)-${{ github.run_id }}"
+          RUN_URL="${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}"
+
+          echo "Creating tag: $TAG_NAME"
+          echo "Run URL: $RUN_URL"
+
+          tag_repo() {
+            local repo=$1
+            local sha=$2
+            local retries=3
+
+            echo "Tagging $repo at $sha..."
+
+            for ((i=1; i<=retries; i++)); do
+              TAG_SHA=$(gh api "repos/kelleyglenn/${repo}/git/tags" \
+                -f tag="$TAG_NAME" \
+                -f message="Integration tests passed. Run: $RUN_URL" \
+                -f object="$sha" \
+                -f type="commit" \
+                --jq '.sha' 2>/dev/null) || true
+
+              if [ -n "$TAG_SHA" ]; then
+                if gh api "repos/kelleyglenn/${repo}/git/refs" \
+                  -f ref="refs/tags/$TAG_NAME" \
+                  -f sha="$TAG_SHA" >/dev/null 2>&1; then
+                  echo "Successfully tagged $repo"
+                  return 0
+                fi
+              fi
+
+              echo "Attempt $i/$retries failed for $repo, retrying in 2s..."
+              sleep 2
+            done
+
+            echo "::warning::Failed to tag $repo after $retries attempts"
+            return 0
+          }
+
+          tag_repo "AcctAtlas-integration-tests" "$INTEGRATION_SHA"
+          tag_repo "AcctAtlas-user-service" "$USER_SHA"
+          tag_repo "AcctAtlas-api-gateway" "$GATEWAY_SHA"
+          tag_repo "AcctAtlas-web-app" "$WEBAPP_SHA"
+
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "## Tag Created" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "\`$TAG_NAME\`" >> $GITHUB_STEP_SUMMARY
