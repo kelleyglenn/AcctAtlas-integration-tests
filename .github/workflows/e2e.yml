@@ -1,0 +1,66 @@
+name: E2E Tests
+
+on:
+  push:
+    branches: [master, main]
+  pull_request:
+    branches: [master, main]
+  workflow_dispatch:
+
+jobs:
+  e2e:
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+
+    steps:
+      - name: Checkout integration tests
+        uses: actions/checkout@v4
+
+      - name: Checkout AccountabilityAtlas (docker-compose)
+        uses: actions/checkout@v4
+        with:
+          repository: kelleyglenn/AccountabilityAtlas
+          path: infra
+
+      - name: Start services
+        working-directory: infra
+        run: docker-compose up -d --wait
+
+      - name: Setup Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: 'npm'
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Install Playwright browsers
+        run: npx playwright install --with-deps
+
+      - name: Run E2E tests
+        run: npm run test:e2e
+        env:
+          BASE_URL: http://localhost:3000
+          API_URL: http://localhost:8080/api/v1
+
+      - name: Upload test report
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: playwright-report
+          path: e2e/playwright-report/
+          retention-days: 14
+
+      - name: Upload test results
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: test-results
+          path: e2e/test-results/
+          retention-days: 14
+
+      - name: Stop services
+        if: always()
+        working-directory: infra
+        run: docker-compose down
