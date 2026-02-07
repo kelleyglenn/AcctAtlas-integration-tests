@@ -18,6 +18,6 @@ export default tseslint.config(
     },
   },
   {
-    ignores: ['node_modules/', 'dist/', '**/playwright-report/', '**/test-results/'],
+    ignores: ['node_modules/', 'dist/', 'infra/', '**/playwright-report/', '**/test-results/'],
   }
 );
