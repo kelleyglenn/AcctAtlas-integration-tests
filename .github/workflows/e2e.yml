@@ -11,6 +11,11 @@ jobs:
   e2e:
     runs-on: ubuntu-latest
     timeout-minutes: 30
+    outputs:
+      integration-tests-sha: ${{ github.sha }}
+      user-service-sha: ${{ steps.checkout-user.outputs.commit }}
+      api-gateway-sha: ${{ steps.checkout-gateway.outputs.commit }}
+      web-app-sha: ${{ steps.checkout-webapp.outputs.commit }}
 
     steps:
       - name: Checkout integration tests
