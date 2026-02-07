@@ -23,18 +23,21 @@ jobs:
           path: infra
 
       - name: Checkout user-service
+        id: checkout-user
         uses: actions/checkout@v4
         with:
           repository: kelleyglenn/AcctAtlas-user-service
           path: infra/AcctAtlas-user-service
 
       - name: Checkout api-gateway
+        id: checkout-gateway
         uses: actions/checkout@v4
         with:
           repository: kelleyglenn/AcctAtlas-api-gateway
           path: infra/AcctAtlas-api-gateway
 
       - name: Checkout web-app
+        id: checkout-webapp
         uses: actions/checkout@v4
         with:
           repository: kelleyglenn/AcctAtlas-web-app
