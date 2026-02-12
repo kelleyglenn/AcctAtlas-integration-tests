@@ -1,7 +1,5 @@
 import { test, expect } from '@playwright/test';
-import { createTestUser, authHeaders } from '../fixtures/api-helpers';
-
-const API_URL = process.env.API_URL || 'http://localhost:8080/api/v1';
+import { API_URL, createTestUser, authHeaders } from '../fixtures/api-helpers';
 
 test.describe('Video Service API', () => {
   test.describe('List Videos', () => {
@@ -73,7 +71,7 @@ test.describe('Video Service API', () => {
     });
 
     // TODO: Should return 400 for validation errors, but currently returns 500
-    // Tracked as known issue for better validation error handling
+    // See: https://github.com/kelleyglenn/AcctAtlas-video-service/issues/14
     test('validates required fields', async ({ request }) => {
       const user = await createTestUser(request);
 
@@ -89,6 +87,7 @@ test.describe('Video Service API', () => {
     });
 
     // TODO: Should return 400 for validation errors
+    // See: https://github.com/kelleyglenn/AcctAtlas-video-service/issues/14
     test('requires at least one amendment', async ({ request }) => {
       const user = await createTestUser(request);
 
@@ -106,6 +105,7 @@ test.describe('Video Service API', () => {
     });
 
     // TODO: Should return 400 for validation errors
+    // See: https://github.com/kelleyglenn/AcctAtlas-video-service/issues/14
     test('requires at least one participant', async ({ request }) => {
       const user = await createTestUser(request);
 

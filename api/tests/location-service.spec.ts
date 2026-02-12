@@ -1,7 +1,5 @@
 import { test, expect } from '@playwright/test';
-import { createTestUser, createTestLocation, authHeaders } from '../fixtures/api-helpers';
-
-const API_URL = process.env.API_URL || 'http://localhost:8080/api/v1';
+import { API_URL, createTestUser, createTestLocation, authHeaders } from '../fixtures/api-helpers';
 
 test.describe('Location Service API', () => {
   test.describe('Create Location', () => {
@@ -31,7 +29,7 @@ test.describe('Location Service API', () => {
     });
 
     // TODO: API spec says POST /locations requires auth, but current implementation allows anonymous
-    // This test documents actual behavior - needs investigation
+    // See: https://github.com/kelleyglenn/AcctAtlas-location-service/issues/3
     test.skip('requires authentication', async ({ request }) => {
       const response = await request.post(`${API_URL}/locations`, {
         data: {
@@ -88,16 +86,18 @@ test.describe('Location Service API', () => {
     test('returns locations within bounding box', async ({ request }) => {
       const user = await createTestUser(request);
 
-      // Create a location in Phoenix area
-      await createTestLocation(request, user.accessToken, {
-        displayName: 'Phoenix Test Location',
-        latitude: 33.45,
-        longitude: -112.07,
+      // Create a location with specific coordinates we can verify
+      const testLat = 33.45;
+      const testLng = -112.07;
+      const createdLocation = await createTestLocation(request, user.accessToken, {
+        displayName: `Phoenix Test Location ${Date.now()}`,
+        latitude: testLat,
+        longitude: testLng,
         city: 'Phoenix',
         state: 'AZ',
       });
 
-      // Query with bounding box around Phoenix
+      // Query with bounding box that definitely includes our test location
       const response = await request.get(`${API_URL}/locations`, {
         params: {
           bbox: '-112.2,33.3,-111.9,33.6', // minLng,minLat,maxLng,maxLat
@@ -108,7 +108,11 @@ test.describe('Location Service API', () => {
       const body = await response.json();
 
       expect(body.locations).toBeInstanceOf(Array);
-      expect(body.count).toBeGreaterThanOrEqual(0);
+      expect(body.count).toBeGreaterThanOrEqual(1);
+
+      // Verify our specific location is in the results
+      const found = body.locations.some((loc: { id: string }) => loc.id === createdLocation.id);
+      expect(found).toBeTruthy();
     });
 
     test('validates bounding box format', async ({ request }) => {
@@ -139,7 +143,7 @@ test.describe('Location Service API', () => {
     });
 
     // TODO: Should return 400 for missing zoom, but currently returns 500
-    // Tracked as known issue for better validation error handling
+    // See: https://github.com/kelleyglenn/AcctAtlas-location-service/issues/4
     test('requires zoom parameter', async ({ request }) => {
       const response = await request.get(`${API_URL}/locations/cluster`, {
         params: {

@@ -1,6 +1,10 @@
 import { APIRequestContext } from '@playwright/test';
 
-const API_URL = process.env.API_URL || 'http://localhost:8080/api/v1';
+/** Base API URL - configurable via environment variable */
+export const API_URL = process.env.API_URL || 'http://localhost:8080/api/v1';
+
+/** Base host for direct service access (health checks) */
+export const SERVICE_HOST = process.env.SERVICE_HOST || 'localhost';
 
 export interface TestUser {
   id: string;
@@ -16,15 +20,6 @@ export interface TestLocation {
   coordinates: { latitude: number; longitude: number };
   city?: string;
   state?: string;
-}
-
-export interface TestVideo {
-  id: string;
-  youtubeId: string;
-  title: string;
-  status: string;
-  amendments: string[];
-  participants: string[];
 }
 
 /**
@@ -113,25 +108,4 @@ export function authHeaders(accessToken: string): Record<string, string> {
     Authorization: `Bearer ${accessToken}`,
     'Content-Type': 'application/json',
   };
-}
-
-/**
- * Wait for a condition with polling
- */
-export async function waitFor<T>(
-  fn: () => Promise<T | null>,
-  options: { timeout?: number; interval?: number } = {}
-): Promise<T> {
-  const { timeout = 10000, interval = 500 } = options;
-  const start = Date.now();
-
-  while (Date.now() - start < timeout) {
-    const result = await fn();
-    if (result !== null) {
-      return result;
-    }
-    await new Promise((resolve) => setTimeout(resolve, interval));
-  }
-
-  throw new Error(`Timeout waiting for condition after ${timeout}ms`);
 }

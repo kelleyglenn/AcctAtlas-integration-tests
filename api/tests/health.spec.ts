@@ -1,4 +1,5 @@
 import { test, expect } from '@playwright/test';
+import { SERVICE_HOST } from '../fixtures/api-helpers';
 
 const SERVICES = [
   { name: 'api-gateway', port: 8080 },
@@ -12,7 +13,7 @@ const SERVICES = [
 test.describe('Service Health Checks', () => {
   for (const service of SERVICES) {
     test(`${service.name} is healthy`, async ({ request }) => {
-      const response = await request.get(`http://localhost:${service.port}/actuator/health`);
+      const response = await request.get(`http://${SERVICE_HOST}:${service.port}/actuator/health`);
 
       expect(response.ok()).toBeTruthy();
       const body = await response.json();
