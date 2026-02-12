@@ -1,5 +1,5 @@
 import { test, expect } from '@playwright/test';
-import { API_URL, createTestUser, createTestLocation, authHeaders } from '../fixtures/api-helpers';
+import { API_URL, createTestUser, createTestLocation, authHeaders } from '../fixtures/api-helpers.js';
 
 test.describe('Location Service API', () => {
   test.describe('Create Location', () => {

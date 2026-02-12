@@ -1,5 +1,5 @@
 import { test, expect } from '@playwright/test';
-import { SERVICE_HOST } from '../fixtures/api-helpers';
+import { SERVICE_HOST } from '../fixtures/api-helpers.js';
 
 const SERVICES = [
   { name: 'api-gateway', port: 8080 },

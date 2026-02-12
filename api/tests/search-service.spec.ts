@@ -1,5 +1,5 @@
 import { test, expect } from '@playwright/test';
-import { API_URL } from '../fixtures/api-helpers';
+import { API_URL } from '../fixtures/api-helpers.js';
 
 test.describe('Search Service API', () => {
   test.describe('Video Search', () => {
