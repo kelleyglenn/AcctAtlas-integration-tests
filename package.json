@@ -8,7 +8,11 @@
     "test:e2e:headed": "playwright test --config=e2e/playwright.config.ts --headed",
     "test:e2e:ui": "playwright test --config=e2e/playwright.config.ts --ui",
     "test:e2e:debug": "playwright test --config=e2e/playwright.config.ts --debug",
+    "test:api": "playwright test --config=api/playwright.config.ts",
+    "test:api:debug": "playwright test --config=api/playwright.config.ts --debug",
+    "test:all": "npm run test:api && npm run test:e2e",
     "report": "playwright show-report e2e/playwright-report",
+    "report:api": "playwright show-report api/playwright-report",
     "lint": "eslint .",
     "lint:fix": "eslint . --fix"
   },
