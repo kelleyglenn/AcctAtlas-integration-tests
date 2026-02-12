@@ -18,8 +18,24 @@ export default defineConfig({
     },
   },
 
-  // No browser projects needed for API tests
-  projects: [{ name: 'api' }],
+  // User-service tests run first since other services depend on user authentication
+  // Health checks run first to verify services are up, then user-service, then others
+  projects: [
+    {
+      name: 'health',
+      testMatch: /health\.spec\.ts/,
+    },
+    {
+      name: 'user-service',
+      testMatch: /user-service\.spec\.ts/,
+      dependencies: ['health'],
+    },
+    {
+      name: 'other-services',
+      testIgnore: [/health\.spec\.ts/, /user-service\.spec\.ts/],
+      dependencies: ['user-service'],
+    },
+  ],
 
   outputDir: 'test-results',
 });
