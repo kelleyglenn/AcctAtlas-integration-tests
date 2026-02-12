@@ -98,6 +98,7 @@ AcctAtlas-integration-tests/
 ├── api/
 │   ├── tests/               # API test files by service
 │   │   ├── health.spec.ts           # Service health checks
+│   │   ├── user-service.spec.ts     # User/auth API tests
 │   │   ├── location-service.spec.ts # Location API tests
 │   │   ├── video-service.spec.ts    # Video API tests
 │   │   ├── moderation-service.spec.ts
@@ -119,15 +120,25 @@ AcctAtlas-integration-tests/
 
 ## Test Coverage
 
-### API Tests (40 tests)
+### API Tests (71 tests, 58 passing, 13 skipped)
 
-| Service | Tests | Coverage |
-|---------|-------|----------|
-| Health | 6 | All service health endpoints |
-| Location | 10 | CRUD, spatial queries, clustering |
-| Video | 14 | CRUD, access control, locations |
-| Moderation | 5 | Queue access, abuse reports |
-| Search | 8 | Filters, pagination, public access |
+Tests run in dependency order: health → user-service → other services
+
+| Service | Passing | Skipped | Coverage |
+|---------|---------|---------|----------|
+| Health | 6 | 0 | All service health endpoints |
+| User | 19 | 11 | Registration, login, profile, trust tiers |
+| Location | 9 | 1 | CRUD, spatial queries, clustering |
+| Video | 14 | 0 | CRUD, access control, locations |
+| Moderation | 5 | 0 | Queue access, abuse reports |
+| Search | 8 | 0 | Filters, pagination, public access |
+
+**Skipped tests** are for unimplemented endpoints:
+- Token refresh ([#22](https://github.com/kelleyglenn/AcctAtlas-user-service/issues/22))
+- Logout ([#23](https://github.com/kelleyglenn/AcctAtlas-user-service/issues/23))
+- Profile update ([#24](https://github.com/kelleyglenn/AcctAtlas-user-service/issues/24))
+- Password reset ([#25](https://github.com/kelleyglenn/AcctAtlas-user-service/issues/25))
+- Location auth requirement ([#3](https://github.com/kelleyglenn/AcctAtlas-location-service/issues/3))
 
 ### E2E Tests (9 tests)
 
