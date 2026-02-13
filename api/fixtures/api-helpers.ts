@@ -29,8 +29,10 @@ export async function createTestUser(
   request: APIRequestContext,
   overrides: Partial<{ email: string; password: string; displayName: string }> = {}
 ): Promise<TestUser> {
+  // Use timestamp + random suffix to avoid collisions when tests run in parallel
+  const uniqueId = `${Date.now()}-${Math.random().toString(36).substring(2, 8)}`;
   const userData = {
-    email: `api-test-${Date.now()}@example.com`,
+    email: `api-test-${uniqueId}@example.com`,
     password: 'TestPass123!',
     displayName: 'API Test User',
     ...overrides,
