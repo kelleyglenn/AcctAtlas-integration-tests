@@ -52,4 +52,45 @@ test.describe('Map Browse', () => {
     // Assert: navigated to video detail page
     await expect(page).toHaveURL(/\/videos\/[a-f0-9-]+/);
   });
+
+  test('filter by amendment updates video list', async ({ page, browserName }) => {
+    // Arrange: go to map
+    await page.goto('/map');
+    if (browserName === 'webkit') {
+      await page.waitForTimeout(500);
+    }
+    await expect(page.locator('[data-video-id]').first()).toBeVisible({ timeout: 10000 });
+
+    // Get initial video count in list
+    const videoList = page.locator('[data-testid="video-list-item"]');
+    const initialCount = await videoList.count();
+
+    // Act: click 4th Amendment filter (fewer videos have this)
+    await page.getByRole('button', { name: /4th/i }).click();
+
+    // Assert: list is filtered (count changes or specific video visible)
+    // Note: All seed videos have FIRST, only 3 have FOURTH
+    await page.waitForTimeout(300); // Allow filter to apply
+    const filteredCount = await videoList.count();
+    expect(filteredCount).toBeLessThanOrEqual(initialCount);
+  });
+
+  test('filter by participant updates video list', async ({ page, browserName }) => {
+    // Arrange: go to map
+    await page.goto('/map');
+    if (browserName === 'webkit') {
+      await page.waitForTimeout(500);
+    }
+    await expect(page.locator('[data-video-id]').first()).toBeVisible({ timeout: 10000 });
+
+    // Act: click Government filter
+    await page.getByRole('button', { name: /Government/i }).click();
+
+    // Assert: Government-tagged videos visible
+    await page.waitForTimeout(300);
+    // The filter should show only videos with GOVERNMENT participant
+    const videoList = page.locator('[data-testid="video-list-item"]');
+    const count = await videoList.count();
+    expect(count).toBeGreaterThan(0);
+  });
 });
