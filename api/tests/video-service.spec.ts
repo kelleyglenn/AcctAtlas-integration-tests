@@ -6,7 +6,11 @@ test.describe('Video Service API', () => {
     test('returns paginated list of approved videos', async ({ request }) => {
       const response = await request.get(`${API_URL}/videos`);
 
-      expect(response.ok()).toBeTruthy();
+      // Better error message for debugging CI failures
+      if (!response.ok()) {
+        const body = await response.text();
+        throw new Error(`Expected OK response but got ${response.status()}: ${body}`);
+      }
       const body = await response.json();
 
       expect(body.content).toBeInstanceOf(Array);
