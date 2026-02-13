@@ -113,6 +113,8 @@ jobs:
       - name: Start services
         working-directory: infra
         run: docker compose --profile backend --profile frontend up -d --wait
+        env:
+          NEXT_PUBLIC_MAPBOX_ACCESS_TOKEN: ${{ secrets.NEXT_PUBLIC_MAPBOX_ACCESS_TOKEN }}
 
       - name: Setup Node
         uses: actions/setup-node@v4
@@ -130,6 +132,7 @@ jobs:
         run: npx playwright install --with-deps
 
       - name: Run API tests
+        timeout-minutes: 10
         run: npm run test:api
         env:
           API_URL: http://localhost:8080/api/v1
@@ -152,6 +155,7 @@ jobs:
           retention-days: 14
 
       - name: Run E2E tests
+        timeout-minutes: 10
         run: npm run test:e2e
         env:
           BASE_URL: http://localhost:3000
