@@ -93,4 +93,41 @@ test.describe('Map Browse', () => {
     const count = await videoList.count();
     expect(count).toBeGreaterThan(0);
   });
+
+  test('location search flies to location and shows toast', async ({ page, browserName }) => {
+    // Arrange: go to map
+    await page.goto('/map');
+    if (browserName === 'webkit') {
+      await page.waitForTimeout(500);
+    }
+
+    // Act: type in search box and select result
+    const searchBox = page.getByRole('combobox').or(page.locator('input[placeholder*="Search"]'));
+    await searchBox.fill('Denver');
+
+    // Wait for autocomplete and click first result
+    const suggestion = page.getByRole('option').first();
+    await expect(suggestion).toBeVisible({ timeout: 5000 });
+    await suggestion.click();
+
+    // Assert: toast appears
+    await expect(page.getByText(/Moved to/i)).toBeVisible({ timeout: 5000 });
+  });
+
+  test('clicking video in list shows marker popup', async ({ page, browserName }) => {
+    // Arrange: go to map
+    await page.goto('/map');
+    if (browserName === 'webkit') {
+      await page.waitForTimeout(500);
+    }
+    await expect(page.locator('[data-video-id]').first()).toBeVisible({ timeout: 10000 });
+
+    // Act: click a video in the side panel list
+    const listItem = page.locator('[data-testid="video-list-item"]').first();
+    await expect(listItem).toBeVisible();
+    await listItem.click();
+
+    // Assert: popup appears with View Video button
+    await expect(page.getByRole('button', { name: /View Video/i })).toBeVisible();
+  });
 });
