@@ -140,11 +140,13 @@ Tests run in dependency order: health → user-service → other services
 - Password reset ([#25](https://github.com/kelleyglenn/AcctAtlas-user-service/issues/25))
 - Location auth requirement ([#3](https://github.com/kelleyglenn/AcctAtlas-location-service/issues/3))
 
-### E2E Tests (9 tests)
+### E2E Tests (22 tests)
 
 | Feature | Tests | Coverage |
 |---------|-------|----------|
 | Auth | 9 | Login flow across 3 browsers |
+| Map | 7 | Map browsing, markers, filters, search |
+| Video | 6 | Video detail page, navigation, 404 |
 
 ## Writing Tests
 
