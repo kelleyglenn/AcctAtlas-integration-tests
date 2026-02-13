@@ -1,6 +1,6 @@
 // e2e/tests/videos/video-detail.spec.ts
 import { test, expect } from '@playwright/test';
-import { SEED_VIDEOS } from '../../fixtures/seed-data';
+import { SEED_VIDEOS, NON_EXISTENT_VIDEO_ID } from '../../fixtures/seed-data';
 
 test.describe('Video Detail', () => {
   test('video detail page shows video information', async ({ page }) => {
@@ -48,5 +48,41 @@ test.describe('Video Detail', () => {
 
     // Assert: back at map
     await expect(page).toHaveURL('/map');
+  });
+
+  test('"Watch on YouTube" link has correct URL', async ({ page }) => {
+    // Arrange: navigate to known video
+    const video = SEED_VIDEOS.SF_FIRST_AMENDMENT;
+    await page.goto(`/videos/${video.id}`);
+
+    // Assert: YouTube link has correct href
+    const youtubeLink = page.getByRole('link', { name: /Watch on YouTube/i });
+    await expect(youtubeLink).toBeVisible({ timeout: 10000 });
+    await expect(youtubeLink).toHaveAttribute('href', `https://www.youtube.com/watch?v=${video.youtubeId}`);
+    await expect(youtubeLink).toHaveAttribute('target', '_blank');
+  });
+
+  test('"Back to Map" button navigates to map', async ({ page }) => {
+    // Arrange: navigate to known video
+    const video = SEED_VIDEOS.SF_FIRST_AMENDMENT;
+    await page.goto(`/videos/${video.id}`);
+    await expect(page.getByText(video.title)).toBeVisible({ timeout: 10000 });
+
+    // Act: click Back to Map
+    await page.getByRole('link', { name: /Back to Map/i }).click();
+
+    // Assert: at map page
+    await expect(page).toHaveURL('/map');
+  });
+
+  test('shows error for non-existent video', async ({ page }) => {
+    // Act: navigate to non-existent video
+    await page.goto(`/videos/${NON_EXISTENT_VIDEO_ID}`);
+
+    // Assert: error message shown
+    await expect(page.getByText(/not found/i)).toBeVisible({ timeout: 10000 });
+
+    // Assert: link back to map exists
+    await expect(page.getByRole('link', { name: /map/i })).toBeVisible();
   });
 });
