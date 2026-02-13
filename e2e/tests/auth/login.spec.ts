@@ -9,11 +9,19 @@ test.describe('Login', () => {
 
     // Act: log in through the UI
     await page.goto('/login');
+    const emailField = page.getByLabel('Email');
+    const passwordField = page.getByLabel('Password');
+
     if (browserName === 'webkit') {
-      await page.waitForTimeout(100); // WebKit needs extra time for form readiness
+      // WebKit needs explicit clicks before filling inputs
+      await emailField.click();
+      await emailField.fill(user.email);
+      await passwordField.click();
+      await passwordField.fill(user.password);
+    } else {
+      await emailField.fill(user.email);
+      await passwordField.fill(user.password);
     }
-    await page.getByLabel('Email').fill(user.email);
-    await page.getByLabel('Password').fill(user.password);
     await page.getByRole('button', { name: /Sign In/i }).click();
 
     // Assert: redirected to profile/home
@@ -24,11 +32,19 @@ test.describe('Login', () => {
   test('shows error for invalid credentials', async ({ page, browserName }) => {
     // Act: attempt login with invalid credentials
     await page.goto('/login');
+    const emailField = page.getByLabel('Email');
+    const passwordField = page.getByLabel('Password');
+
     if (browserName === 'webkit') {
-      await page.waitForTimeout(200); // WebKit needs extra time for form readiness
+      // WebKit needs explicit clicks before filling inputs
+      await emailField.click();
+      await emailField.fill('nobody@example.com');
+      await passwordField.click();
+      await passwordField.fill('WrongPassword');
+    } else {
+      await emailField.fill('nobody@example.com');
+      await passwordField.fill('WrongPassword');
     }
-    await page.getByLabel('Email').fill('nobody@example.com');
-    await page.getByLabel('Password').fill('WrongPassword');
     await page.getByRole('button', { name: /Sign In/i }).click();
 
     // Assert: error message displayed
