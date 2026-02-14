@@ -1,7 +1,19 @@
 import { test, expect } from '@playwright/test';
-import { API_URL, createTestUser, createTestLocation, authHeaders } from '../fixtures/api-helpers.js';
+import {
+  API_URL,
+  createTestUser,
+  createTestLocation,
+  authHeaders,
+  deleteTestLocations,
+} from '../fixtures/api-helpers.js';
 
 test.describe('Location Service API', () => {
+  const createdLocationIds: string[] = [];
+
+  test.afterAll(() => {
+    deleteTestLocations(createdLocationIds);
+  });
+
   test.describe('Create Location', () => {
     test('creates a location with valid data', async ({ request }) => {
       const user = await createTestUser(request);
@@ -21,6 +33,7 @@ test.describe('Location Service API', () => {
       const body = await response.json();
 
       expect(body.id).toBeDefined();
+      createdLocationIds.push(body.id);
       expect(body.displayName).toBe('Phoenix Police Department');
       expect(body.coordinates.latitude).toBeCloseTo(33.4484, 4);
       expect(body.coordinates.longitude).toBeCloseTo(-112.074, 4);
@@ -65,6 +78,7 @@ test.describe('Location Service API', () => {
         city: 'Scottsdale',
         state: 'AZ',
       });
+      createdLocationIds.push(location.id);
 
       const response = await request.get(`${API_URL}/locations/${location.id}`);
 
@@ -96,6 +110,7 @@ test.describe('Location Service API', () => {
         city: 'Phoenix',
         state: 'AZ',
       });
+      createdLocationIds.push(createdLocation.id);
 
       // Query with bounding box that definitely includes our test location
       const response = await request.get(`${API_URL}/locations`, {
