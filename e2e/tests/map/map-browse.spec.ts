@@ -161,6 +161,32 @@ test.describe('Map Browse', () => {
     }).toPass({ timeout: PAGE_LOAD_TIMEOUT });
   });
 
+  test('clicking cluster marker zooms to show all member locations', async ({ page, browserName }) => {
+    // Arrange: go to map at initial zoom (should show clusters at zoom < 8)
+    await page.goto('/map');
+    if (browserName === 'webkit') {
+      await page.waitForTimeout(1000);
+    }
+
+    // Wait for cluster markers to load (default zoom shows clusters)
+    const clusterMarker = page.locator('[data-testid="cluster-marker"]');
+    await expect(clusterMarker.first()).toBeVisible({ timeout: PAGE_LOAD_TIMEOUT });
+
+    // Get initial cluster count before clicking
+    const initialClusterCount = await clusterMarker.count();
+
+    // Act: click the first cluster marker (force: true because side panel may overlap the map)
+    await clusterMarker.first().click({ force: true });
+
+    // Assert: after fitBounds animation, the view changes (clusters re-render at new zoom)
+    await expect(async () => {
+      const videoMarkerCount = await page.locator('[data-testid="video-marker"]').count();
+      const newClusterCount = await clusterMarker.count();
+      // Either individual video markers appear, or cluster count changed (zoomed in)
+      expect(videoMarkerCount > 0 || newClusterCount !== initialClusterCount).toBeTruthy();
+    }).toPass({ timeout: PAGE_LOAD_TIMEOUT });
+  });
+
   test('clicking video in list shows marker popup', async ({ page, browserName }) => {
     // Arrange: go to map
     await page.goto('/map');
