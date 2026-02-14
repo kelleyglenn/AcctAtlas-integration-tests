@@ -120,8 +120,13 @@ const POSTGRES_CONTAINER = process.env.POSTGRES_CONTAINER || 'accountabilityatla
  * Delete test-created locations from the database by their IDs.
  * Cleans up both location_stats (FK) and locations tables.
  */
+const UUID_RE = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
+
 export function deleteTestLocations(ids: string[]): void {
   if (ids.length === 0) return;
+  if (!ids.every((id) => UUID_RE.test(id))) {
+    throw new Error(`deleteTestLocations: invalid UUID in [${ids.join(', ')}]`);
+  }
   const quoted = ids.map((id) => `'${id}'`).join(',');
   const sql = `DELETE FROM locations.location_stats WHERE location_id IN (${quoted}); DELETE FROM locations.locations WHERE id IN (${quoted});`;
   try {
