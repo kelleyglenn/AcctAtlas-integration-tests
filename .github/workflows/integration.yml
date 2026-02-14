@@ -235,27 +235,40 @@ jobs:
             local sha=$2
             local retries=3
 
-            echo "Tagging $repo at $sha..."
+            echo "Tagging $repo at ${sha:0:7}..."
 
             for ((i=1; i<=retries; i++)); do
-              TAG_SHA=$(gh api "repos/kelleyglenn/${repo}/git/tags" \
+              # gh api writes JSON to stdout, status messages to stderr.
+              # Let stderr flow to the CI log for diagnostics; capture stdout for parsing.
+              TAG_RESPONSE=$(gh api "repos/kelleyglenn/${repo}/git/tags" \
                 -f tag="$TAG_NAME" \
                 -f message="Integration tests passed. Run: $RUN_URL" \
                 -f object="$sha" \
-                -f type="commit" \
-                --jq '.sha' 2>/dev/null) || true
+                -f type="commit") || true
+
+              TAG_SHA=$(echo "$TAG_RESPONSE" | jq -r '.sha // empty' 2>/dev/null)
 
               if [ -n "$TAG_SHA" ]; then
-                if gh api "repos/kelleyglenn/${repo}/git/refs" \
+                REF_RESPONSE=$(gh api "repos/kelleyglenn/${repo}/git/refs" \
                   -f ref="refs/tags/$TAG_NAME" \
-                  -f sha="$TAG_SHA" >/dev/null 2>&1; then
+                  -f sha="$TAG_SHA") || true
+
+                if echo "$REF_RESPONSE" | jq -e '.ref' >/dev/null 2>&1; then
                   echo "Successfully tagged $repo"
                   return 0
+                else
+                  echo "Attempt $i/$retries: failed to create ref for $repo:"
+                  echo "$REF_RESPONSE" | jq -r '.message // "unknown error (see stderr above)"' 2>/dev/null || echo "$REF_RESPONSE"
                 fi
+              else
+                echo "Attempt $i/$retries: failed to create tag object for $repo:"
+                echo "$TAG_RESPONSE" | jq -r '.message // "unknown error (see stderr above)"' 2>/dev/null || echo "$TAG_RESPONSE"
               fi
 
-              echo "Attempt $i/$retries failed for $repo, retrying in 2s..."
-              sleep 2
+              if [ "$i" -lt "$retries" ]; then
+                echo "Retrying in 2s..."
+                sleep 2
+              fi
             done
 
             echo "::warning::Failed to tag $repo after $retries attempts"
