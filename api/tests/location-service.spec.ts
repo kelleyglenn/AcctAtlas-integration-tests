@@ -1,7 +1,19 @@
 import { test, expect } from '@playwright/test';
-import { API_URL, createTestUser, createTestLocation, authHeaders } from '../fixtures/api-helpers.js';
+import {
+  API_URL,
+  createTestUser,
+  createTestLocation,
+  authHeaders,
+  deleteTestLocations,
+} from '../fixtures/api-helpers.js';
 
 test.describe('Location Service API', () => {
+  const createdLocationIds: string[] = [];
+
+  test.afterAll(() => {
+    deleteTestLocations(createdLocationIds);
+  });
+
   test.describe('Create Location', () => {
     test('creates a location with valid data', async ({ request }) => {
       const user = await createTestUser(request);
@@ -21,6 +33,7 @@ test.describe('Location Service API', () => {
       const body = await response.json();
 
       expect(body.id).toBeDefined();
+      createdLocationIds.push(body.id);
       expect(body.displayName).toBe('Phoenix Police Department');
       expect(body.coordinates.latitude).toBeCloseTo(33.4484, 4);
       expect(body.coordinates.longitude).toBeCloseTo(-112.074, 4);
@@ -65,6 +78,7 @@ test.describe('Location Service API', () => {
         city: 'Scottsdale',
         state: 'AZ',
       });
+      createdLocationIds.push(location.id);
 
       const response = await request.get(`${API_URL}/locations/${location.id}`);
 
@@ -96,6 +110,7 @@ test.describe('Location Service API', () => {
         city: 'Phoenix',
         state: 'AZ',
       });
+      createdLocationIds.push(createdLocation.id);
 
       // Query with bounding box that definitely includes our test location
       const response = await request.get(`${API_URL}/locations`, {
@@ -140,6 +155,78 @@ test.describe('Location Service API', () => {
 
       expect(body.clusters).toBeInstanceOf(Array);
       expect(body.totalLocations).toBeGreaterThanOrEqual(0);
+
+      // Each cluster should have bounds
+      for (const cluster of body.clusters) {
+        expect(cluster.bounds).toBeDefined();
+        expect(cluster.bounds.minLat).toBeDefined();
+        expect(cluster.bounds.maxLat).toBeDefined();
+        expect(cluster.bounds.minLng).toBeDefined();
+        expect(cluster.bounds.maxLng).toBeDefined();
+      }
+    });
+
+    test('returns multiple regional clusters at default zoom', async ({ request }) => {
+      // At zoom 4, epsilon = 45/16 = 2.8125° — should NOT merge all US locations into one cluster
+      const response = await request.get(`${API_URL}/locations/cluster`, {
+        params: {
+          bbox: '-125,24,-66,50', // Continental US
+          zoom: 4,
+        },
+      });
+
+      expect(response.ok()).toBeTruthy();
+      const body = await response.json();
+
+      // With fixed epsilon, expect multiple clusters/markers (Bay Area, Texas, etc.)
+      expect(body.clusters.length).toBeGreaterThan(1);
+    });
+
+    test('cluster bounds contain all member locations', async ({ request }) => {
+      // At zoom 5, Bay Area locations should form a cluster with known bounds
+      const response = await request.get(`${API_URL}/locations/cluster`, {
+        params: {
+          bbox: '-125,35,-120,40', // California region
+          zoom: 5,
+        },
+      });
+
+      expect(response.ok()).toBeTruthy();
+      const body = await response.json();
+
+      // Find the Bay Area cluster (count >= 5, latitude ~37.x)
+      const bayAreaCluster = body.clusters.find(
+        (c: { count: number; coordinates: { latitude: number } }) =>
+          c.count >= 5 && c.coordinates.latitude > 37 && c.coordinates.latitude < 38,
+      );
+
+      if (bayAreaCluster) {
+        // Bounds should span from San Jose (~37.34) to Berkeley (~37.87)
+        expect(bayAreaCluster.bounds.minLat).toBeCloseTo(37.34, 0);
+        expect(bayAreaCluster.bounds.maxLat).toBeCloseTo(37.87, 0);
+        // Bounds should span from SF (~-122.42) to San Jose (~-121.89)
+        expect(bayAreaCluster.bounds.minLng).toBeLessThan(-121.8);
+        expect(bayAreaCluster.bounds.maxLng).toBeGreaterThan(-122.5);
+      }
+    });
+
+    test('cluster centroid is within bounds', async ({ request }) => {
+      const response = await request.get(`${API_URL}/locations/cluster`, {
+        params: {
+          bbox: '-125,24,-66,50',
+          zoom: 5,
+        },
+      });
+
+      expect(response.ok()).toBeTruthy();
+      const body = await response.json();
+
+      for (const cluster of body.clusters) {
+        expect(cluster.coordinates.latitude).toBeGreaterThanOrEqual(cluster.bounds.minLat);
+        expect(cluster.coordinates.latitude).toBeLessThanOrEqual(cluster.bounds.maxLat);
+        expect(cluster.coordinates.longitude).toBeGreaterThanOrEqual(cluster.bounds.minLng);
+        expect(cluster.coordinates.longitude).toBeLessThanOrEqual(cluster.bounds.maxLng);
+      }
     });
 
     // TODO: Should return 400 for missing zoom, but currently returns 500
