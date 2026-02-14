@@ -132,6 +132,35 @@ test.describe('Map Browse', () => {
     await expect(page.getByText(/Moved to/i)).toBeVisible({ timeout: UI_INTERACTION_TIMEOUT });
   });
 
+  test('panning map updates video list based on visible area', async ({ page, browserName }) => {
+    // Arrange: go to map and wait for initial load
+    await page.goto('/map');
+    if (browserName === 'webkit') {
+      await page.waitForTimeout(1000);
+    }
+
+    const videoList = page.locator('[data-testid="video-list-item"]');
+    await expect(videoList.first()).toBeVisible({ timeout: PAGE_LOAD_TIMEOUT });
+
+    // Get initial count (should be all 10 seed videos at zoom 4 over US)
+    const initialCount = await videoList.count();
+
+    // Act: search for "San Antonio" to fly to Texas
+    const searchBox = page.getByRole('combobox').or(page.locator('input[placeholder*="Search"]'));
+    await searchBox.fill('San Antonio');
+
+    const suggestion = page.getByRole('option').first();
+    await expect(suggestion).toBeVisible({ timeout: UI_INTERACTION_TIMEOUT });
+    await suggestion.click();
+
+    // Wait for flyTo animation (1500ms) + moveDebounce (300ms) + API response
+    // Use Playwright's auto-retry to wait for the count to change
+    await expect(async () => {
+      const newCount = await videoList.count();
+      expect(newCount).toBeLessThan(initialCount);
+    }).toPass({ timeout: PAGE_LOAD_TIMEOUT });
+  });
+
   test('clicking video in list shows marker popup', async ({ page, browserName }) => {
     // Arrange: go to map
     await page.goto('/map');
