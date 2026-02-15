@@ -7,6 +7,10 @@ on:
     branches: [master, main]
   workflow_dispatch:
 
+permissions:
+  checks: write
+  contents: read
+
 jobs:
   integration:
     runs-on: ubuntu-latest
@@ -155,6 +159,14 @@ jobs:
           path: api/test-results/
           retention-days: 14
 
+      - name: API Test Report
+        if: always()
+        uses: dorny/test-reporter@v2
+        with:
+          name: API Test Results
+          path: api/results.xml
+          reporter: java-junit
+
       - name: Run E2E tests
         timeout-minutes: 10
         run: xvfb-run npm run test:e2e
@@ -177,6 +189,14 @@ jobs:
           name: e2e-test-results
           path: e2e/test-results/
           retention-days: 14
+
+      - name: E2E Test Report
+        if: always()
+        uses: dorny/test-reporter@v2
+        with:
+          name: E2E Test Results
+          path: e2e/results.xml
+          reporter: java-junit
 
       - name: Stop services
         if: always()
