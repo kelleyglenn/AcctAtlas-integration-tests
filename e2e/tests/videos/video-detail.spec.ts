@@ -16,8 +16,8 @@ test.describe('Video Detail', () => {
     const iframe = page.locator(`iframe[src*="youtube.com/embed/${video.youtubeId}"]`);
     await expect(iframe).toBeVisible();
 
-    // Assert: amendment badge is visible (badge shows API format like "FIRST")
-    await expect(page.getByText('FIRST', { exact: true })).toBeVisible();
+    // Assert: amendment chip is visible (rewritten page shows formatted labels like "1st Amendment")
+    await expect(page.getByText('1st Amendment')).toBeVisible();
   });
 
   test('video detail page shows location information', async ({ page }) => {
@@ -27,29 +27,20 @@ test.describe('Video Detail', () => {
 
     // Assert: location info visible - verify city appears in the location section
     await expect(page.getByText(video.city)).toBeVisible({ timeout: PAGE_LOAD_TIMEOUT });
-    // Verify state appears alongside city (the format is "city, state")
-    await expect(page.getByText(`${video.city}, ${video.state}`)).toBeVisible();
+    // Verify state appears alongside city (the format is "displayName, city, state")
+    await expect(page.getByText(new RegExp(`${video.city},\\s*${video.state}`))).toBeVisible();
   });
 
-  test('back button returns to previous page', async ({ page, browserName }) => {
-    // Arrange: start at map, navigate to video
-    await page.goto('/map');
-    if (browserName === 'webkit') {
-      await page.waitForTimeout(1000);
-    }
+  test('location link navigates to map with coordinates', async ({ page }) => {
+    // Arrange: navigate to known video
+    const video = SEED_VIDEOS.SF_FIRST_AMENDMENT;
+    await page.goto(`/videos/${video.id}`);
+    await expect(page.getByText(video.title)).toBeVisible({ timeout: PAGE_LOAD_TIMEOUT });
 
-    // Wait for video list to load and click first item
-    const videoList = page.locator('[data-testid="video-list-item"]');
-    await expect(videoList.first()).toBeVisible({ timeout: PAGE_LOAD_TIMEOUT });
-    await videoList.first().click();
-    await page.getByRole('link', { name: /View Video/i }).click();
-    await expect(page).toHaveURL(/\/videos\//);
-
-    // Act: click back button (uses aria-label="Go back")
-    await page.getByRole('button', { name: 'Go back' }).click();
-
-    // Assert: back at map
-    await expect(page).toHaveURL('/map');
+    // Assert: location link includes lat/lng/zoom query params ("View on Map" style link)
+    const locationLink = page.locator(`a[href*="/map?lat="]`);
+    await expect(locationLink).toBeVisible();
+    await expect(locationLink).toHaveAttribute('href', /\/map\?lat=[\d.-]+&lng=[\d.-]+&zoom=14/);
   });
 
   test('"Watch on YouTube" link has correct URL', async ({ page }) => {
@@ -57,20 +48,19 @@ test.describe('Video Detail', () => {
     const video = SEED_VIDEOS.SF_FIRST_AMENDMENT;
     await page.goto(`/videos/${video.id}`);
 
-    // Assert: YouTube link has correct href
-    const youtubeLink = page.getByRole('link', { name: /Watch on YouTube/i });
-    await expect(youtubeLink).toBeVisible({ timeout: PAGE_LOAD_TIMEOUT });
-    await expect(youtubeLink).toHaveAttribute('href', `https://www.youtube.com/watch?v=${video.youtubeId}`);
-    await expect(youtubeLink).toHaveAttribute('target', '_blank');
+    // Assert: YouTube link has correct href (embedded in the iframe, not a standalone link)
+    // The rewritten page has an iframe embed; verify it points to the correct YouTube video
+    const iframe = page.locator(`iframe[src*="youtube.com/embed/${video.youtubeId}"]`);
+    await expect(iframe).toBeVisible({ timeout: PAGE_LOAD_TIMEOUT });
   });
 
-  test('"Back to Map" button navigates to map', async ({ page }) => {
+  test('"Back to Map" link navigates to map', async ({ page }) => {
     // Arrange: navigate to known video
     const video = SEED_VIDEOS.SF_FIRST_AMENDMENT;
     await page.goto(`/videos/${video.id}`);
     await expect(page.getByText(video.title)).toBeVisible({ timeout: PAGE_LOAD_TIMEOUT });
 
-    // Act: click Back to Map
+    // Act: click Back to Map link in sidebar
     await page.getByRole('link', { name: /Back to Map/i }).click();
 
     // Assert: at map page
@@ -85,6 +75,28 @@ test.describe('Video Detail', () => {
     await expect(page.getByText(/not found/i)).toBeVisible({ timeout: PAGE_LOAD_TIMEOUT });
 
     // Assert: link back to map exists
-    await expect(page.getByRole('link', { name: /map/i })).toBeVisible();
+    await expect(page.getByRole('link', { name: 'Back to Map' })).toBeVisible();
+  });
+
+  test('video detail page shows participant chips', async ({ page }) => {
+    // Arrange: navigate to a video with known participants
+    const video = SEED_VIDEOS.SF_FIRST_AMENDMENT;
+    await page.goto(`/videos/${video.id}`);
+
+    // Assert: participant chips display formatted labels (e.g., "Police" instead of "POLICE")
+    await expect(page.getByText(video.title)).toBeVisible({ timeout: PAGE_LOAD_TIMEOUT });
+    await expect(page.getByText('Police')).toBeVisible();
+    await expect(page.getByText('Government', { exact: true })).toBeVisible();
+  });
+
+  test('video detail page shows multi-amendment video correctly', async ({ page }) => {
+    // Arrange: navigate to a video with multiple amendments
+    const video = SEED_VIDEOS.OAKLAND_MULTI_AMENDMENT;
+    await page.goto(`/videos/${video.id}`);
+
+    // Assert: both amendment chips are visible
+    await expect(page.getByText(video.title)).toBeVisible({ timeout: PAGE_LOAD_TIMEOUT });
+    await expect(page.getByText('1st Amendment')).toBeVisible();
+    await expect(page.getByText('4th Amendment')).toBeVisible();
   });
 });
