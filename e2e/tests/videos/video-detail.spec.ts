@@ -75,7 +75,7 @@ test.describe('Video Detail', () => {
     await expect(page.getByText(/not found/i)).toBeVisible({ timeout: PAGE_LOAD_TIMEOUT });
 
     // Assert: link back to map exists
-    await expect(page.getByRole('link', { name: /map/i })).toBeVisible();
+    await expect(page.getByRole('link', { name: 'Back to Map' })).toBeVisible();
   });
 
   test('video detail page shows participant chips', async ({ page }) => {
@@ -86,7 +86,7 @@ test.describe('Video Detail', () => {
     // Assert: participant chips display formatted labels (e.g., "Police" instead of "POLICE")
     await expect(page.getByText(video.title)).toBeVisible({ timeout: PAGE_LOAD_TIMEOUT });
     await expect(page.getByText('Police')).toBeVisible();
-    await expect(page.getByText('Government')).toBeVisible();
+    await expect(page.getByText('Government', { exact: true })).toBeVisible();
   });
 
   test('video detail page shows multi-amendment video correctly', async ({ page }) => {

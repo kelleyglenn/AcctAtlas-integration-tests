@@ -29,14 +29,14 @@ test.describe('Video Submission', () => {
       await emailField.fill(user.email);
       await passwordField.fill(user.password);
     }
-    await page.getByRole('button', { name: /Sign In/i }).click();
+    await page.locator('form').getByRole('button', { name: /Sign In/i }).click();
 
     // Assert: redirected to video submission page
     await expect(page).toHaveURL('/videos/new', { timeout: PAGE_LOAD_TIMEOUT });
 
     // Verify key form elements are present
     await expect(page.getByText('Submit a Video')).toBeVisible();
-    await expect(page.getByPlaceholderText(/youtube/i)).toBeVisible();
+    await expect(page.getByPlaceholder(/youtube/i)).toBeVisible();
   });
 
   test('nav bar shows Submit Video button when authenticated', async ({
@@ -62,7 +62,7 @@ test.describe('Video Submission', () => {
       await emailField.fill(user.email);
       await passwordField.fill(user.password);
     }
-    await page.getByRole('button', { name: /Sign In/i }).click();
+    await page.locator('form').getByRole('button', { name: /Sign In/i }).click();
     await expect(page).toHaveURL('/');
 
     // Assert: Submit Video button is visible in nav
@@ -98,7 +98,7 @@ test.describe('Video Submission', () => {
       await emailField.fill(user.email);
       await passwordField.fill(user.password);
     }
-    await page.getByRole('button', { name: /Sign In/i }).click();
+    await page.locator('form').getByRole('button', { name: /Sign In/i }).click();
     await expect(page).toHaveURL('/');
 
     // Act: click Submit Video link in nav

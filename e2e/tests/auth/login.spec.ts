@@ -22,11 +22,11 @@ test.describe('Login', () => {
       await emailField.fill(user.email);
       await passwordField.fill(user.password);
     }
-    await page.getByRole('button', { name: /Sign In/i }).click();
+    await page.locator('form').getByRole('button', { name: /Sign In/i }).click();
 
     // Assert: redirected to profile/home
     await expect(page).toHaveURL('/');
-    await expect(page.getByText(user.displayName)).toBeVisible();
+    await expect(page.getByRole('navigation').getByText(user.displayName)).toBeVisible();
   });
 
   test('shows error for invalid credentials', async ({ page, browserName }) => {
@@ -45,7 +45,7 @@ test.describe('Login', () => {
       await emailField.fill('nobody@example.com');
       await passwordField.fill('WrongPassword');
     }
-    await page.getByRole('button', { name: /Sign In/i }).click();
+    await page.locator('form').getByRole('button', { name: /Sign In/i }).click();
 
     // Assert: error message displayed
     await expect(page.getByRole('alert').getByText(/Email or password is incorrect/i)).toBeVisible();
@@ -57,6 +57,6 @@ test.describe('Login', () => {
     // Verify key elements are present
     await expect(page.getByLabel('Email')).toBeVisible();
     await expect(page.getByLabel('Password')).toBeVisible();
-    await expect(page.getByRole('button', { name: /Sign In/i })).toBeVisible();
+    await expect(page.locator('form').getByRole('button', { name: /Sign In/i })).toBeVisible();
   });
 });
