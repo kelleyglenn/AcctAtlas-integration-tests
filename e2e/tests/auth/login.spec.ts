@@ -1,5 +1,6 @@
 import { test, expect } from '@playwright/test';
 import { createTestUser } from '../../fixtures/test-data';
+import { PAGE_LOAD_TIMEOUT } from '../../fixtures/test-constants';
 
 test.describe('Login', () => {
   test('user can log in with valid credentials', async ({ page, request, browserName }) => {
@@ -47,8 +48,8 @@ test.describe('Login', () => {
     }
     await page.locator('form').getByRole('button', { name: /Sign In/i }).click();
 
-    // Assert: error message displayed
-    await expect(page.getByRole('alert').getByText(/Email or password is incorrect/i)).toBeVisible();
+    // Assert: error message displayed (API response can be slow under parallel test load)
+    await expect(page.getByRole('alert').getByText(/Email or password is incorrect/i)).toBeVisible({ timeout: PAGE_LOAD_TIMEOUT });
   });
 
   test('login page is accessible', async ({ page }) => {
