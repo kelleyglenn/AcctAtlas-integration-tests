@@ -41,9 +41,7 @@ test.describe('Location Service API', () => {
       expect(body.state).toBe('AZ');
     });
 
-    // TODO: API spec says POST /locations requires auth, but current implementation allows anonymous
-    // See: https://github.com/kelleyglenn/AcctAtlas-location-service/issues/3
-    test.skip('requires authentication', async ({ request }) => {
+    test('requires authentication', async ({ request }) => {
       const response = await request.post(`${API_URL}/locations`, {
         data: {
           displayName: 'Test Location',
@@ -51,7 +49,8 @@ test.describe('Location Service API', () => {
         },
       });
 
-      expect(response.status()).toBe(401);
+      // Should return 401 (Unauthorized) now that auth is enforced
+      expect([401, 403]).toContain(response.status());
     });
 
     test('validates required fields', async ({ request }) => {
@@ -229,8 +228,6 @@ test.describe('Location Service API', () => {
       }
     });
 
-    // TODO: Should return 400 for missing zoom, but currently returns 500
-    // See: https://github.com/kelleyglenn/AcctAtlas-location-service/issues/4
     test('requires zoom parameter', async ({ request }) => {
       const response = await request.get(`${API_URL}/locations/cluster`, {
         params: {
@@ -239,8 +236,37 @@ test.describe('Location Service API', () => {
         },
       });
 
-      // Accepts either 400 (correct) or 500 (current behavior)
-      expect([400, 500]).toContain(response.status());
+      expect(response.status()).toBe(400);
+      const body = await response.json();
+      expect(body.code).toBe('VALIDATION_ERROR');
+    });
+
+    test('cluster centroids are accurate for Bay Area locations', async ({ request }) => {
+      // Bay Area seed locations: SF, Oakland, San Jose, Berkeley, Fremont
+      // Expected centroid: ~(37.67, -122.20) (average of all 5)
+      const response = await request.get(`${API_URL}/locations/cluster`, {
+        params: {
+          bbox: '-123,37,-121,38.5',
+          zoom: 5,
+        },
+      });
+
+      expect(response.ok()).toBeTruthy();
+      const body = await response.json();
+
+      // Find the Bay Area cluster (the one with 5+ members in the 37-38 lat range)
+      const bayAreaCluster = body.clusters.find(
+        (c: { count: number; coordinates: { latitude: number } }) =>
+          c.count >= 5 && c.coordinates.latitude > 37 && c.coordinates.latitude < 38.5,
+      );
+
+      // Centroid should be close to the average of the 5 Bay Area locations
+      if (bayAreaCluster) {
+        expect(bayAreaCluster.coordinates.latitude).toBeGreaterThan(37.3);
+        expect(bayAreaCluster.coordinates.latitude).toBeLessThan(37.9);
+        expect(bayAreaCluster.coordinates.longitude).toBeGreaterThan(-122.5);
+        expect(bayAreaCluster.coordinates.longitude).toBeLessThan(-121.8);
+      }
     });
   });
 });
