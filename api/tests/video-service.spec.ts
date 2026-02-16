@@ -165,7 +165,7 @@ test.describe('Video Service API', () => {
       }
     });
 
-    test('auto-approves videos from trusted users', async ({ request }) => {
+    test('auto-approves videos from trusted users', { timeout: 60_000 }, async ({ request }) => {
       // Use the seed trusted user (already TRUSTED, no promotion needed)
       const trustedLogin = await request.post(`${API_URL}/auth/login`, {
         data: { email: 'trusted@example.com', password: 'password123' },
@@ -207,7 +207,26 @@ test.describe('Video Service API', () => {
 
       expect(response.ok()).toBeTruthy();
       const video = await response.json();
-      expect(video.status).toBe('APPROVED');
+
+      // Auto-approval is async via SQS (video-service -> moderation-service -> video-service).
+      // Poll the detail endpoint until the status changes from PENDING to APPROVED.
+      if (video.status !== 'APPROVED') {
+        let approved = false;
+        for (let i = 0; i < 30; i++) {
+          await new Promise((r) => setTimeout(r, 1000));
+          const detailRes = await request.get(`${API_URL}/videos/${video.id}`, {
+            headers: authHeaders(trustedToken),
+          });
+          if (detailRes.ok()) {
+            const detail = await detailRes.json();
+            if (detail.status === 'APPROVED') {
+              approved = true;
+              break;
+            }
+          }
+        }
+        expect(approved).toBe(true);
+      }
     });
   });
 
