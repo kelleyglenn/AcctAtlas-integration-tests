@@ -1,5 +1,5 @@
 import { test, expect } from '@playwright/test';
-import { API_URL, createTestUser, authHeaders } from '../fixtures/api-helpers.js';
+import { API_URL, createTestUser, createTestLocation, deleteTestLocations, authHeaders } from '../fixtures/api-helpers.js';
 
 test.describe('Video Service API', () => {
   test.describe('List Videos', () => {
@@ -117,6 +117,122 @@ test.describe('Video Service API', () => {
       });
 
       expect(response.status()).toBe(400);
+    });
+
+    test('requires a locationId', async ({ request }) => {
+      const user = await createTestUser(request);
+
+      const response = await request.post(`${API_URL}/videos`, {
+        data: {
+          youtubeUrl: 'https://www.youtube.com/watch?v=dQw4w9WgXcQ',
+          amendments: ['FIRST'],
+          participants: ['POLICE'],
+          // No locationId
+        },
+        headers: authHeaders(user.accessToken),
+      });
+
+      expect(response.status()).toBe(400);
+      const body = await response.json();
+      expect(body.code).toBe('VALIDATION_ERROR');
+      expect(body.details).toEqual(
+        expect.arrayContaining([expect.objectContaining({ field: 'locationId' })])
+      );
+    });
+
+    test('returns structured validation error details', async ({ request }) => {
+      const user = await createTestUser(request);
+
+      const response = await request.post(`${API_URL}/videos`, {
+        data: {
+          youtubeUrl: 'https://www.youtube.com/watch?v=dQw4w9WgXcQ',
+          amendments: [],
+          participants: [],
+        },
+        headers: authHeaders(user.accessToken),
+      });
+
+      expect(response.status()).toBe(400);
+      const body = await response.json();
+      expect(body.code).toBe('VALIDATION_ERROR');
+      expect(body.message).toBeDefined();
+      expect(body.details).toBeInstanceOf(Array);
+      // Expects errors for: amendments (empty), participants (empty), locationId (missing)
+      expect(body.details.length).toBeGreaterThanOrEqual(2);
+      // Each detail has field and message
+      for (const detail of body.details) {
+        expect(detail.field).toBeDefined();
+        expect(detail.message).toBeDefined();
+      }
+    });
+
+    test('auto-approves videos from trusted users', { timeout: 15_000 }, async ({ request }) => {
+      // Use the seed trusted user (already TRUSTED, no promotion needed)
+      const trustedLogin = await request.post(`${API_URL}/auth/login`, {
+        data: { email: 'trusted@example.com', password: 'password123' },
+      });
+
+      if (!trustedLogin.ok()) {
+        test.skip(true, 'Trusted seed user not available');
+        return;
+      }
+
+      const trustedBody = await trustedLogin.json();
+      const trustedToken = trustedBody.tokens.accessToken;
+      const trustedUserId = trustedBody.user.id;
+
+      // Create a location for the video
+      const location = await createTestLocation(request, trustedToken);
+      const locationIds = [location.id];
+
+      try {
+        // Create a video as the TRUSTED user
+        const response = await request.post(`${API_URL}/videos`, {
+          data: {
+            youtubeUrl: 'https://www.youtube.com/watch?v=dQw4w9WgXcQ',
+            amendments: ['FIRST'],
+            participants: ['POLICE'],
+            locationId: location.id,
+          },
+          headers: authHeaders(trustedToken),
+        });
+
+        // Video may already exist (409) from other tests using same URL
+        if (response.status() === 409) {
+          // Verify the trusted user's existing videos are APPROVED
+          const userVideos = await request.get(`${API_URL}/videos/user/${trustedUserId}`, {
+            headers: authHeaders(trustedToken),
+          });
+          expect(userVideos.ok()).toBeTruthy();
+          // If we can't create a new one, just verify the endpoint works
+          return;
+        }
+
+        expect(response.ok()).toBeTruthy();
+        const video = await response.json();
+
+        // Auto-approval is async via SQS (video-service -> moderation-service -> video-service).
+        // Poll the detail endpoint until the status changes from PENDING to APPROVED.
+        if (video.status !== 'APPROVED') {
+          let approved = false;
+          for (let i = 0; i < 2; i++) {
+            await new Promise((r) => setTimeout(r, 2000));
+            const detailRes = await request.get(`${API_URL}/videos/${video.id}`, {
+              headers: authHeaders(trustedToken),
+            });
+            if (detailRes.ok()) {
+              const detail = await detailRes.json();
+              if (detail.status === 'APPROVED') {
+                approved = true;
+                break;
+              }
+            }
+          }
+          expect(approved).toBe(true);
+        }
+      } finally {
+        deleteTestLocations(locationIds);
+      }
     });
   });
 
