@@ -68,6 +68,7 @@ test.describe('Video Service API', () => {
           youtubeUrl: 'https://www.youtube.com/watch?v=dQw4w9WgXcQ',
           amendments: ['FIRST'],
           participants: ['POLICE'],
+          locationId: '00000000-0000-0000-0000-000000000000',
         },
       });
 

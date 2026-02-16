@@ -100,6 +100,7 @@ test.describe('JWKS and Cross-Service JWT', () => {
           youtubeUrl: 'https://www.youtube.com/watch?v=dQw4w9WgXcQ',
           amendments: ['FIRST'],
           participants: ['POLICE'],
+          locationId: '00000000-0000-0000-0000-000000000000',
         },
         headers: { Authorization: 'Bearer invalid-token' },
       });
