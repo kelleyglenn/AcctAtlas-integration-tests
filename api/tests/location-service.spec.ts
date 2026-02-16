@@ -49,8 +49,7 @@ test.describe('Location Service API', () => {
         },
       });
 
-      // Should return 401 (Unauthorized) now that auth is enforced
-      expect([401, 403]).toContain(response.status());
+      expect(response.status()).toBe(401);
     });
 
     test('validates required fields', async ({ request }) => {
