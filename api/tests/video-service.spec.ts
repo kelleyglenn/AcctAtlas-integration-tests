@@ -1,5 +1,5 @@
 import { test, expect } from '@playwright/test';
-import { API_URL, createTestUser, authHeaders } from '../fixtures/api-helpers.js';
+import { API_URL, createTestUser, createTestLocation, authHeaders } from '../fixtures/api-helpers.js';
 
 test.describe('Video Service API', () => {
   test.describe('List Videos', () => {
@@ -117,6 +117,93 @@ test.describe('Video Service API', () => {
       });
 
       expect(response.status()).toBe(400);
+    });
+
+    test('requires a locationId', async ({ request }) => {
+      const user = await createTestUser(request);
+
+      const response = await request.post(`${API_URL}/videos`, {
+        data: {
+          youtubeUrl: 'https://www.youtube.com/watch?v=dQw4w9WgXcQ',
+          amendments: ['FIRST'],
+          participants: ['POLICE'],
+          // No locationId
+        },
+        headers: authHeaders(user.accessToken),
+      });
+
+      expect(response.status()).toBe(400);
+      const body = await response.json();
+      expect(body.code).toBe('VALIDATION_ERROR');
+      expect(body.details).toEqual(
+        expect.arrayContaining([expect.objectContaining({ field: 'locationId' })])
+      );
+    });
+
+    test('returns structured validation error details', async ({ request }) => {
+      const user = await createTestUser(request);
+
+      const response = await request.post(`${API_URL}/videos`, {
+        data: {
+          youtubeUrl: 'https://www.youtube.com/watch?v=dQw4w9WgXcQ',
+          amendments: [],
+          participants: [],
+        },
+        headers: authHeaders(user.accessToken),
+      });
+
+      expect(response.status()).toBe(400);
+      const body = await response.json();
+      expect(body.code).toBe('VALIDATION_ERROR');
+      expect(body.message).toBeDefined();
+      expect(body.details).toBeInstanceOf(Array);
+      expect(body.details.length).toBeGreaterThanOrEqual(2);
+      // Each detail has field and message
+      for (const detail of body.details) {
+        expect(detail.field).toBeDefined();
+        expect(detail.message).toBeDefined();
+      }
+    });
+
+    test('auto-approves videos from trusted users', async ({ request }) => {
+      // Login as the seed admin user (password123 for all seed users)
+      const adminLogin = await request.post(`${API_URL}/auth/login`, {
+        data: { email: 'admin@example.com', password: 'password123' },
+      });
+
+      if (!adminLogin.ok()) {
+        test.skip(true, 'Admin seed user not available');
+        return;
+      }
+
+      const adminBody = await adminLogin.json();
+      const adminToken = adminBody.tokens.accessToken;
+
+      // Create a regular user and promote to TRUSTED
+      const user = await createTestUser(request);
+
+      await request.put(`${API_URL}/users/${user.id}/trust-tier`, {
+        data: { trustTier: 'TRUSTED', reason: 'Integration test promotion' },
+        headers: authHeaders(adminToken),
+      });
+
+      // Create a location for the video
+      const location = await createTestLocation(request, user.accessToken);
+
+      // Create a video as the now-TRUSTED user
+      const response = await request.post(`${API_URL}/videos`, {
+        data: {
+          youtubeUrl: `https://www.youtube.com/watch?v=test${Date.now()}`,
+          amendments: ['FIRST'],
+          participants: ['POLICE'],
+          locationId: location.id,
+        },
+        headers: authHeaders(user.accessToken),
+      });
+
+      expect(response.ok()).toBeTruthy();
+      const video = await response.json();
+      expect(video.status).toBe('APPROVED');
     });
   });
 
