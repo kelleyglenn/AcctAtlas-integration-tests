@@ -75,8 +75,6 @@ test.describe('Video Service API', () => {
       expect([401, 403]).toContain(response.status());
     });
 
-    // TODO: Should return 400 for validation errors, but currently returns 500
-    // See: https://github.com/kelleyglenn/AcctAtlas-video-service/issues/14
     test('validates required fields', async ({ request }) => {
       const user = await createTestUser(request);
 
@@ -87,12 +85,9 @@ test.describe('Video Service API', () => {
         headers: authHeaders(user.accessToken),
       });
 
-      // Accepts either 400 (correct) or 500 (current behavior)
-      expect([400, 500]).toContain(response.status());
+      expect(response.status()).toBe(400);
     });
 
-    // TODO: Should return 400 for validation errors
-    // See: https://github.com/kelleyglenn/AcctAtlas-video-service/issues/14
     test('requires at least one amendment', async ({ request }) => {
       const user = await createTestUser(request);
 
@@ -105,12 +100,9 @@ test.describe('Video Service API', () => {
         headers: authHeaders(user.accessToken),
       });
 
-      // Accepts either 400 (correct) or 500 (current behavior)
-      expect([400, 500]).toContain(response.status());
+      expect(response.status()).toBe(400);
     });
 
-    // TODO: Should return 400 for validation errors
-    // See: https://github.com/kelleyglenn/AcctAtlas-video-service/issues/14
     test('requires at least one participant', async ({ request }) => {
       const user = await createTestUser(request);
 
@@ -123,8 +115,7 @@ test.describe('Video Service API', () => {
         headers: authHeaders(user.accessToken),
       });
 
-      // Accepts either 400 (correct) or 500 (current behavior)
-      expect([400, 500]).toContain(response.status());
+      expect(response.status()).toBe(400);
     });
   });
 
