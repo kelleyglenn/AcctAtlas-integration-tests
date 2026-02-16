@@ -27,25 +27,21 @@ test.describe("Logout", () => {
       .click();
     await expect(page).toHaveURL("/");
 
-    // Verify user is authenticated
-    await expect(
-      page.getByRole("navigation").getByText(user.displayName),
-    ).toBeVisible();
+    const nav = page.getByRole("navigation");
 
-    // Act: click Sign Out
-    await page.getByText("Sign Out").click();
+    // Verify user is authenticated
+    await expect(nav.getByText(user.displayName)).toBeVisible();
+
+    // Act: click Sign Out in the nav bar
+    await nav.getByRole("button", { name: "Sign Out" }).click();
 
     // Assert: user is logged out
-    await expect(page.getByRole("link", { name: /Sign In/i })).toBeVisible({
+    await expect(nav.getByRole("link", { name: /Sign In/i })).toBeVisible({
       timeout: PAGE_LOAD_TIMEOUT,
     });
     // Display name should no longer be visible
-    await expect(
-      page.getByRole("navigation").getByText(user.displayName),
-    ).toBeHidden();
+    await expect(nav.getByText(user.displayName)).toBeHidden();
     // Submit Video button should be hidden
-    await expect(
-      page.getByRole("link", { name: /Submit Video/i }),
-    ).toBeHidden();
+    await expect(nav.getByRole("link", { name: /Submit Video/i })).toBeHidden();
   });
 });
