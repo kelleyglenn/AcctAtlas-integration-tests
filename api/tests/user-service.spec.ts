@@ -226,17 +226,13 @@ test.describe('User Service API', () => {
   });
 
   test.describe('Logout', () => {
-    // TODO: Logout endpoint not yet implemented
-    // See: https://github.com/kelleyglenn/AcctAtlas-user-service/issues/23
-    test.skip('requires authentication', async ({ request }) => {
+    test('requires authentication', async ({ request }) => {
       const response = await request.post(`${API_URL}/auth/logout`);
 
       expect([401, 403]).toContain(response.status());
     });
 
-    // TODO: Logout endpoint not yet implemented
-    // See: https://github.com/kelleyglenn/AcctAtlas-user-service/issues/23
-    test.skip('logs out authenticated user', async ({ request }) => {
+    test('logs out authenticated user', async ({ request }) => {
       const user = await createTestUser(request);
 
       const response = await request.post(`${API_URL}/auth/logout`, {
