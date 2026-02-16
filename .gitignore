@@ -8,7 +8,7 @@ test-results/
 playwright-report/
 .env
 .env.local
-results.xml
+**/results.xml
 
 # IDEs
 /.idea/
