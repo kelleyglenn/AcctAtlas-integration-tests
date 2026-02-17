@@ -1,5 +1,6 @@
 // e2e/tests/map/map-browse.spec.ts
 import { test, expect } from '@playwright/test';
+import { SEED_VIDEOS } from '../../fixtures/seed-data';
 import { PAGE_LOAD_TIMEOUT, UI_INTERACTION_TIMEOUT } from '../../fixtures/test-constants';
 
 test.describe('Map Browse', () => {
@@ -205,5 +206,33 @@ test.describe('Map Browse', () => {
 
     // Assert: popup appears with View Video link
     await expect(page.getByRole('link', { name: /View Video/i })).toBeVisible({ timeout: UI_INTERACTION_TIMEOUT });
+  });
+
+  test('zooming out transitions from individual markers to clusters', async ({ page, browserName }) => {
+    const video = SEED_VIDEOS.SF_FIRST_AMENDMENT;
+
+    // Arrange: navigate to map zoomed in on SF (zoom 14 > cluster threshold 8)
+    await page.goto(`/map?lat=${video.lat}&lng=${video.lng}&zoom=14`);
+    if (browserName !== 'chromium') {
+      await page.waitForTimeout(1000);
+    }
+
+    // Assert: individual video markers visible at zoom 14
+    await expect(page.locator('[data-testid="video-marker"]').first()).toBeVisible({ timeout: PAGE_LOAD_TIMEOUT });
+
+    // Assert: no cluster markers at high zoom
+    await expect(page.locator('[data-testid="cluster-marker"]')).toHaveCount(0);
+
+    // Act: navigate to same location at zoom 4 (zoomed out — should trigger clustering)
+    await page.goto(`/map?lat=${video.lat}&lng=${video.lng}&zoom=4`);
+    if (browserName !== 'chromium') {
+      await page.waitForTimeout(1000);
+    }
+
+    // Assert: cluster markers visible at low zoom
+    await expect(page.locator('[data-testid="cluster-marker"]').first()).toBeVisible({ timeout: PAGE_LOAD_TIMEOUT });
+
+    // Assert: video list is still populated
+    await expect(page.locator('[data-testid="video-list-item"]').first()).toBeVisible({ timeout: UI_INTERACTION_TIMEOUT });
   });
 });
