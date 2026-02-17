@@ -1,4 +1,4 @@
-import { APIRequestContext } from '@playwright/test';
+import { APIRequestContext, Page, expect } from '@playwright/test';
 
 const API_URL = process.env.API_URL || 'http://localhost:8080/api/v1';
 
@@ -25,6 +25,29 @@ export async function createTestUser(
   });
 
   return { ...userData, response };
+}
+
+export async function loginViaUI(
+  page: Page,
+  email: string,
+  password: string,
+  browserName: string
+): Promise<void> {
+  await page.goto('/login');
+  const emailField = page.getByLabel('Email');
+  const passwordField = page.getByLabel('Password');
+
+  if (browserName === 'webkit') {
+    await emailField.click();
+    await emailField.fill(email);
+    await passwordField.click();
+    await passwordField.fill(password);
+  } else {
+    await emailField.fill(email);
+    await passwordField.fill(password);
+  }
+  await page.locator('form').getByRole('button', { name: /Sign In/i }).click();
+  await expect(page).toHaveURL('/');
 }
 
 export async function loginAs(
