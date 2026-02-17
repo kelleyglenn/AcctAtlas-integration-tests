@@ -60,9 +60,7 @@ test.describe('Moderation Service API', () => {
   });
 
   test.describe('Queue Content Lookup', () => {
-    test('returns 404 for non-existent content ID', async ({ request }) => {
-      // Create a moderator user — but since we can't create moderator users via API,
-      // we test the unauthenticated case (should return 401 or 403)
+    test('requires authentication for content lookup', async ({ request }) => {
       const response = await request.get(
         `${API_URL}/moderation/queue/by-content/00000000-0000-0000-0000-000000000000`,
       );

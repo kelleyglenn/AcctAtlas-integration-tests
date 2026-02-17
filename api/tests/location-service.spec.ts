@@ -260,12 +260,11 @@ test.describe('Location Service API', () => {
       );
 
       // Centroid should be close to the average of the 5 Bay Area locations
-      if (bayAreaCluster) {
-        expect(bayAreaCluster.coordinates.latitude).toBeGreaterThan(37.3);
-        expect(bayAreaCluster.coordinates.latitude).toBeLessThan(37.9);
-        expect(bayAreaCluster.coordinates.longitude).toBeGreaterThan(-122.5);
-        expect(bayAreaCluster.coordinates.longitude).toBeLessThan(-121.8);
-      }
+      expect(bayAreaCluster).toBeDefined();
+      expect(bayAreaCluster.coordinates.latitude).toBeGreaterThan(37.3);
+      expect(bayAreaCluster.coordinates.latitude).toBeLessThan(37.9);
+      expect(bayAreaCluster.coordinates.longitude).toBeGreaterThan(-122.5);
+      expect(bayAreaCluster.coordinates.longitude).toBeLessThan(-121.8);
     });
   });
 });
