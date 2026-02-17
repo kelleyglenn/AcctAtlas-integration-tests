@@ -291,10 +291,11 @@ test.describe('Video Service API', () => {
     test('owner can see rejection reason on their rejected videos', async ({ request }) => {
       const user = await createTestUser(request);
 
-      // Submit a video
+      // Submit a video (use unique URL to avoid 409 from other tests)
+      const uniqueId = `reject_${Date.now()}`;
       const submitResponse = await request.post(`${API_URL}/videos`, {
         data: {
-          youtubeUrl: 'https://youtube.com/watch?v=dQw4w9WgXcQ',
+          youtubeUrl: `https://youtube.com/watch?v=${uniqueId}`,
           amendments: ['FIRST'],
           participants: ['POLICE'],
           locationId: '00000000-0000-0000-0000-000000000001',
