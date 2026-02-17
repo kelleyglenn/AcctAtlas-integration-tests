@@ -290,35 +290,41 @@ test.describe('Video Service API', () => {
   test.describe('Video Rejection Reason', () => {
     test('owner can see rejection reason on their rejected videos', async ({ request }) => {
       const user = await createTestUser(request);
+      const location = await createTestLocation(request, user.accessToken);
+      const locationIds = [location.id];
 
-      // Submit a video (use unique URL to avoid 409 from other tests)
-      const uniqueId = `reject_${Date.now()}`;
-      const submitResponse = await request.post(`${API_URL}/videos`, {
-        data: {
-          youtubeUrl: `https://youtube.com/watch?v=${uniqueId}`,
-          amendments: ['FIRST'],
-          participants: ['POLICE'],
-          locationId: '00000000-0000-0000-0000-000000000001',
-        },
-        headers: authHeaders(user.accessToken),
-      });
+      try {
+        // Submit a video (use unique URL to avoid 409 from other tests)
+        const uniqueId = `reject_${Date.now()}`;
+        const submitResponse = await request.post(`${API_URL}/videos`, {
+          data: {
+            youtubeUrl: `https://youtube.com/watch?v=${uniqueId}`,
+            amendments: ['FIRST'],
+            participants: ['POLICE'],
+            locationId: location.id,
+          },
+          headers: authHeaders(user.accessToken),
+        });
 
-      expect(submitResponse.status()).toBe(201);
-      const video = await submitResponse.json();
+        expect(submitResponse.status()).toBe(201);
+        const video = await submitResponse.json();
 
-      // Fetch own videos — rejection reason field should exist in schema
-      const listResponse = await request.get(`${API_URL}/videos?submittedBy=me`, {
-        headers: authHeaders(user.accessToken),
-      });
+        // Fetch own videos — rejection reason field should exist in schema
+        const listResponse = await request.get(`${API_URL}/videos?submittedBy=me`, {
+          headers: authHeaders(user.accessToken),
+        });
 
-      expect(listResponse.ok()).toBeTruthy();
-      const listBody = await listResponse.json();
-      // Video should be PENDING (no rejection reason yet)
-      const found = listBody.content.find((v: any) => v.id === video.id);
-      expect(found).toBeDefined();
-      expect(found.status).toBe('PENDING');
-      // rejectionReason should be null for non-rejected videos
-      expect(found.rejectionReason ?? null).toBeNull();
+        expect(listResponse.ok()).toBeTruthy();
+        const listBody = await listResponse.json();
+        // Video should be PENDING (no rejection reason yet)
+        const found = listBody.content.find((v: any) => v.id === video.id);
+        expect(found).toBeDefined();
+        expect(found.status).toBe('PENDING');
+        // rejectionReason should be null for non-rejected videos
+        expect(found.rejectionReason ?? null).toBeNull();
+      } finally {
+        deleteTestLocations(locationIds);
+      }
     });
   });
 });
