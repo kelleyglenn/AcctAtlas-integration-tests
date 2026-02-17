@@ -14,6 +14,8 @@ export const SEED_VIDEOS = {
     participants: ['POLICE', 'GOVERNMENT'],
     city: 'San Francisco',
     state: 'CA',
+    lat: 37.7793,
+    lng: -122.4193,
   },
   OAKLAND_MULTI_AMENDMENT: {
     id: '10000000-0000-0000-0000-000000000002',

@@ -1,7 +1,7 @@
 // e2e/tests/videos/video-detail.spec.ts
 import { test, expect } from '@playwright/test';
 import { SEED_VIDEOS, NON_EXISTENT_VIDEO_ID } from '../../fixtures/seed-data';
-import { PAGE_LOAD_TIMEOUT } from '../../fixtures/test-constants';
+import { PAGE_LOAD_TIMEOUT, UI_INTERACTION_TIMEOUT } from '../../fixtures/test-constants';
 
 test.describe('Video Detail', () => {
   test('video detail page shows video information', async ({ page }) => {
@@ -41,6 +41,54 @@ test.describe('Video Detail', () => {
     const locationLink = page.locator(`a[href*="/map?lat="]`);
     await expect(locationLink).toBeVisible();
     await expect(locationLink).toHaveAttribute('href', /\/map\?lat=[\d.-]+&lng=[\d.-]+&zoom=14/);
+  });
+
+  test('video detail page renders mini-map with location', async ({ page, browserName }) => {
+    // Arrange: navigate to known video
+    const video = SEED_VIDEOS.SF_FIRST_AMENDMENT;
+    await page.goto(`/videos/${video.id}`);
+    await expect(page.getByText(video.title)).toBeVisible({ timeout: PAGE_LOAD_TIMEOUT });
+
+    // WebGL warmup for non-Chromium browsers
+    if (browserName !== 'chromium') {
+      await page.waitForTimeout(1000);
+    }
+
+    // Assert: mini-map container is visible
+    const miniMap = page.locator('[data-testid="mini-map"]');
+    await expect(miniMap).toBeVisible();
+
+    // Assert: Mapbox canvas initialized inside mini-map (confirms WebGL rendered)
+    await expect(miniMap.locator('.mapboxgl-canvas')).toBeVisible({ timeout: PAGE_LOAD_TIMEOUT });
+  });
+
+  test('clicking location link navigates to map and shows video marker', async ({ page, browserName }) => {
+    // Arrange: navigate to known video
+    const video = SEED_VIDEOS.SF_FIRST_AMENDMENT;
+    await page.goto(`/videos/${video.id}`);
+    await expect(page.getByText(video.title)).toBeVisible({ timeout: PAGE_LOAD_TIMEOUT });
+
+    // Act: click the location link (same selector as existing href-only test)
+    const locationLink = page.locator('a[href*="/map?lat="]');
+    await expect(locationLink).toBeVisible();
+    await locationLink.click();
+
+    // Assert: URL matches /map?lat=...&lng=...&zoom=14
+    await expect(page).toHaveURL(/\/map\?lat=[\d.-]+&lng=[\d.-]+&zoom=14/, { timeout: PAGE_LOAD_TIMEOUT });
+
+    // WebGL warmup for non-Chromium browsers
+    if (browserName !== 'chromium') {
+      await page.waitForTimeout(1000);
+    }
+
+    // Assert: individual video marker visible (zoom 14 is above cluster threshold of 8)
+    await expect(page.locator('[data-testid="video-marker"]').first()).toBeVisible({ timeout: PAGE_LOAD_TIMEOUT });
+
+    // Assert: no cluster markers at this zoom level
+    await expect(page.locator('[data-testid="cluster-marker"]')).toHaveCount(0);
+
+    // Assert: video list is populated
+    await expect(page.locator('[data-testid="video-list-item"]').first()).toBeVisible({ timeout: UI_INTERACTION_TIMEOUT });
   });
 
   test('"Watch on YouTube" link has correct URL', async ({ page }) => {
