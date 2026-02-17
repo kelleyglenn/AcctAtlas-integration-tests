@@ -313,7 +313,7 @@ test.describe('Video Service API', () => {
           const video = await submitResponse.json();
 
           // Fetch own videos — rejection reason field should exist in schema
-          const listResponse = await request.get(`${API_URL}/videos?submittedBy=me`, {
+          const listResponse = await request.get(`${API_URL}/videos/user/${user.id}`, {
             headers: authHeaders(user.accessToken),
           });
 
