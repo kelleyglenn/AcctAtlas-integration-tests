@@ -58,4 +58,29 @@ test.describe('Moderation Service API', () => {
       expect(response.status()).toBe(403);
     });
   });
+
+  test.describe('Queue Content Lookup', () => {
+    test('requires authentication for content lookup', async ({ request }) => {
+      const response = await request.get(
+        `${API_URL}/moderation/queue/by-content/00000000-0000-0000-0000-000000000000`,
+      );
+
+      // Without auth, should get 401 or 403
+      expect([401, 403]).toContain(response.status());
+    });
+
+    test('requires moderator role for content lookup', async ({ request }) => {
+      const user = await createTestUser(request);
+
+      const response = await request.get(
+        `${API_URL}/moderation/queue/by-content/00000000-0000-0000-0000-000000000000`,
+        {
+          headers: authHeaders(user.accessToken),
+        },
+      );
+
+      // Regular users should get 403 Forbidden
+      expect(response.status()).toBe(403);
+    });
+  });
 });
