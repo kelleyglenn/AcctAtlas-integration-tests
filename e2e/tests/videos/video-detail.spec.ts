@@ -1,6 +1,7 @@
 // e2e/tests/videos/video-detail.spec.ts
 import { test, expect } from '@playwright/test';
 import { SEED_VIDEOS, NON_EXISTENT_VIDEO_ID } from '../../fixtures/seed-data';
+import { createTestUser, loginViaUI } from '../../fixtures/test-data';
 import { PAGE_LOAD_TIMEOUT, UI_INTERACTION_TIMEOUT } from '../../fixtures/test-constants';
 
 test.describe('Video Detail', () => {
@@ -146,5 +147,29 @@ test.describe('Video Detail', () => {
     await expect(page.getByText(video.title)).toBeVisible({ timeout: PAGE_LOAD_TIMEOUT });
     await expect(page.getByText('1st Amendment')).toBeVisible();
     await expect(page.getByText('4th Amendment')).toBeVisible();
+  });
+
+  test('submitter link navigates to public profile', async ({ page, request, browserName }) => {
+    // Arrange: create and login a user (submitter link only visible when authenticated)
+    const user = await createTestUser(request);
+    expect(user.response.ok()).toBeTruthy();
+    await loginViaUI(page, user.email, user.password, browserName);
+
+    // Act: navigate to a seed video detail page
+    const video = SEED_VIDEOS.SF_FIRST_AMENDMENT;
+    await page.goto(`/videos/${video.id}`);
+    await expect(page.getByText(video.title)).toBeVisible({ timeout: PAGE_LOAD_TIMEOUT });
+
+    // Assert: submitter link is visible and points to /users/{id}
+    const submitterLink = page.getByRole('link', { name: /Trusted User/i });
+    await expect(submitterLink).toBeVisible();
+    await expect(submitterLink).toHaveAttribute('href', /\/users\/.+/);
+
+    // Act: click the submitter link
+    await submitterLink.click();
+
+    // Assert: navigated to the public profile page
+    await expect(page).toHaveURL(/\/users\//);
+    await expect(page.getByRole('heading', { name: /Trusted User/i })).toBeVisible({ timeout: PAGE_LOAD_TIMEOUT });
   });
 });
