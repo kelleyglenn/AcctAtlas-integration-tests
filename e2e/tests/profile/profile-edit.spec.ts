@@ -29,14 +29,14 @@ test.describe('Profile Edit', () => {
     await page.goto('/profile');
     await expect(page.getByText(originalName)).toBeVisible({ timeout: PAGE_LOAD_TIMEOUT });
 
-    const newName = `Updated Name ${timestamp}`;
+    const newName = `Changed Name ${timestamp}`;
     const displayNameInput = page.getByLabel(/display name/i);
     await displayNameInput.clear();
     await displayNameInput.fill(newName);
     await page.getByRole('button', { name: /save/i }).first().click();
 
-    // Assert: success feedback shown
-    await expect(page.getByText(/saved|updated/i)).toBeVisible({ timeout: UI_INTERACTION_TIMEOUT });
+    // Assert: success feedback shown (avoid matching the new display name)
+    await expect(page.getByText(/saved successfully/i)).toBeVisible({ timeout: UI_INTERACTION_TIMEOUT });
 
     // Assert: change persists after reload
     await page.reload();
