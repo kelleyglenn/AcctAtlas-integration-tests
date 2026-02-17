@@ -107,8 +107,8 @@ test.describe('Trusted User Auto-Approval', () => {
       }).toPass({ timeout: 30_000, intervals: [2000] });
 
       // 6. Capture video title and ID from the detail page
+      await expect(page.locator('h1')).toHaveText(/.+/);
       const videoTitle = await page.locator('h1').textContent();
-      expect(videoTitle).toBeTruthy();
       const videoId = page.url().match(/\/videos\/([a-f0-9-]+)/)?.[1];
       expect(videoId).toBeTruthy();
 
