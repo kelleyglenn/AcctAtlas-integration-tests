@@ -78,8 +78,7 @@ test.describe('Profile Edit', () => {
     const socialLinksToggle = page.getByLabel(/social links.*visible/i);
     await socialLinksToggle.click();
 
-    await page.getByRole('button', { name: /save/i }).click();
-
+    // Privacy settings auto-save on toggle — no explicit Save button needed
     // Assert: success feedback shown
     await expect(page.getByText(/saved|updated/i)).toBeVisible({ timeout: UI_INTERACTION_TIMEOUT });
   });
