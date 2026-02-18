@@ -435,6 +435,19 @@ test.describe('User Service API', () => {
       expect(body.socialLinks.youtube).toBe('UCvisible');
     });
 
+    test('shows trustTier to authenticated viewer', async ({ request }) => {
+      const user1 = await createTestUser(request);
+      const user2 = await createTestUser(request);
+
+      const response = await request.get(`${API_URL}/users/${user1.id}`, {
+        headers: authHeaders(user2.accessToken),
+      });
+
+      expect(response.ok()).toBeTruthy();
+      const body = await response.json();
+      expect(body.trustTier).toBe('NEW');
+    });
+
     test('returns 404 for non-existent user', async ({ request }) => {
       const response = await request.get(`${API_URL}/users/00000000-0000-0000-0000-000000000099`);
       expect(response.status()).toBe(404);
