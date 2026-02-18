@@ -130,21 +130,54 @@ test.describe('Profile Edit', () => {
     await expect(page.locator('[data-testid="profile-avatar"]')).toBeVisible({ timeout: PAGE_LOAD_TIMEOUT });
   });
 
-  test('selecting Gravatar for a real Gravatar email shows actual avatar image', async ({ page, request, browserName }) => {
-    // Arrange: register with a known Gravatar email (or login if already registered)
+  test('selecting Gravatar for a real Gravatar email shows actual avatar image', async ({ page, browserName }) => {
+    // Arrange: register via UI with a known real Gravatar email
     const email = 'test1@example.com';
     const password = 'TestPass123!';
     const displayName = 'Gravatar Test';
 
-    const registerResponse = await request.post(`${process.env.API_URL || 'http://localhost:8080/api/v1'}/auth/register`, {
-      data: { email, password, displayName },
-    });
+    await page.goto('/register');
+    const emailField = page.getByLabel('Email');
+    const nameField = page.getByLabel('Display Name');
+    const passwordField = page.getByLabel('Password', { exact: true });
+    const confirmField = page.getByLabel('Confirm Password');
 
-    if (registerResponse.status() === 409) {
-      // Already registered from a previous run — login instead
+    if (browserName === 'webkit') {
+      await emailField.click();
+      await emailField.fill(email);
+      await nameField.click();
+      await nameField.fill(displayName);
+      await passwordField.click();
+      await passwordField.fill(password);
+      await confirmField.click();
+      await confirmField.fill(password);
+    } else {
+      await emailField.fill(email);
+      await nameField.fill(displayName);
+      await passwordField.fill(password);
+      await confirmField.fill(password);
     }
 
-    await loginViaUI(page, email, password, browserName);
+    await page.getByRole('button', { name: /create account/i }).click();
+
+    // If email is already registered from a previous run, sign in instead
+    const registered = await page.waitForURL('/', { timeout: PAGE_LOAD_TIMEOUT }).then(() => true).catch(() => false);
+    if (!registered) {
+      await page.goto('/login');
+      const loginEmail = page.getByLabel('Email');
+      const loginPassword = page.getByLabel('Password');
+      if (browserName === 'webkit') {
+        await loginEmail.click();
+        await loginEmail.fill(email);
+        await loginPassword.click();
+        await loginPassword.fill(password);
+      } else {
+        await loginEmail.fill(email);
+        await loginPassword.fill(password);
+      }
+      await page.locator('form').getByRole('button', { name: /sign in/i }).click();
+      await expect(page).toHaveURL('/');
+    }
 
     // Act: navigate to profile, open avatar picker, select Gravatar
     await page.goto('/profile');
