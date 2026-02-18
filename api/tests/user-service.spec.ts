@@ -365,6 +365,43 @@ test.describe('User Service API', () => {
       expect(body.privacySettings.submissionsVisibility).toBe('REGISTERED');
     });
 
+    test('clears social link field when updated to empty string', async ({ request }) => {
+      const user = await createTestUser(request);
+
+      // Set initial value
+      await request.put(`${API_URL}/users/me`, {
+        data: { socialLinks: { youtube: 'UCtest123' } },
+        headers: authHeaders(user.accessToken),
+      });
+
+      // Clear it by sending empty string
+      const response = await request.put(`${API_URL}/users/me`, {
+        data: { socialLinks: { youtube: '' } },
+        headers: authHeaders(user.accessToken),
+      });
+
+      expect(response.ok()).toBeTruthy();
+      const body = await response.json();
+      expect(body.socialLinks?.youtube).toBeUndefined();
+    });
+
+    test('returns field-level validation errors for invalid input', async ({ request }) => {
+      const user = await createTestUser(request);
+
+      const response = await request.put(`${API_URL}/users/me`, {
+        data: { displayName: 'X' }, // Too short (min 2)
+        headers: authHeaders(user.accessToken),
+      });
+
+      expect(response.status()).toBe(400);
+      const body = await response.json();
+      expect(body.code).toBe('VALIDATION_ERROR');
+      expect(body.details).toBeDefined();
+      expect(body.details.length).toBeGreaterThan(0);
+      expect(body.details[0].field).toBeDefined();
+      expect(body.details[0].message).toBeDefined();
+    });
+
     test('GET /users/me returns social links and privacy settings', async ({ request }) => {
       const user = await createTestUser(request);
 
