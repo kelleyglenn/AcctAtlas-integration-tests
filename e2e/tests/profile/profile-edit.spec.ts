@@ -130,6 +130,46 @@ test.describe('Profile Edit', () => {
     await expect(page.locator('[data-testid="profile-avatar"]')).toBeVisible({ timeout: PAGE_LOAD_TIMEOUT });
   });
 
+  test('selecting Gravatar for a real Gravatar email shows actual avatar image', async ({ page, request, browserName }) => {
+    // Arrange: register with a known Gravatar email (or login if already registered)
+    const email = 'test1@example.com';
+    const password = 'TestPass123!';
+    const displayName = 'Gravatar Test';
+
+    const registerResponse = await request.post(`${process.env.API_URL || 'http://localhost:8080/api/v1'}/auth/register`, {
+      data: { email, password, displayName },
+    });
+
+    if (registerResponse.status() === 409) {
+      // Already registered from a previous run — login instead
+    }
+
+    await loginViaUI(page, email, password, browserName);
+
+    // Act: navigate to profile, open avatar picker, select Gravatar
+    await page.goto('/profile');
+    await expect(page.getByRole('heading', { name: displayName })).toBeVisible({ timeout: PAGE_LOAD_TIMEOUT });
+    await page.locator('[data-testid="change-avatar-button"]').click();
+    await expect(page.locator('[data-testid="avatar-picker-modal"]')).toBeVisible();
+    await page.locator('[data-testid="avatar-source-gravatar"]').click();
+
+    // Assert: success toast
+    await expect(page.getByText(/saved successfully/i)).toBeVisible({ timeout: UI_INTERACTION_TIMEOUT });
+
+    // Assert: real avatar image is displayed (not initials placeholder)
+    const avatar = page.locator('[data-testid="profile-avatar"]');
+    await expect(avatar).toBeVisible();
+    await expect(avatar).toHaveAttribute('src', /gravatar\.com\/avatar\//);
+
+    // Assert: initials placeholder is gone
+    await expect(page.locator('[data-testid="profile-avatar-placeholder"]')).not.toBeVisible();
+
+    // Assert: avatar persists after reload
+    await page.reload();
+    await expect(page.locator('[data-testid="profile-avatar"]')).toBeVisible({ timeout: PAGE_LOAD_TIMEOUT });
+    await expect(page.locator('[data-testid="profile-avatar"]')).toHaveAttribute('src', /gravatar\.com\/avatar\//);
+  });
+
   test('can toggle privacy settings', async ({ page, request, browserName }) => {
     // Arrange: create and login a user
     const user = await createTestUser(request, { displayName: `Privacy Toggle ${Date.now()}` });
