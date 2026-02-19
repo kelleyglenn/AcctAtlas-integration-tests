@@ -122,20 +122,22 @@ test.describe('Hero Landing Page', () => {
   });
 
   test.describe('NavBar', () => {
-    test('NavBar is transparent on home page', async ({ page }) => {
+    test('NavBar is transparent on home page with z-50 stacking', async ({ page }) => {
       await page.goto('/');
 
       const nav = page.getByRole('navigation');
       await expect(nav).toHaveClass(/bg-transparent/);
       await expect(nav).not.toHaveClass(/border-b/);
+      await expect(nav).toHaveClass(/z-50/);
     });
 
-    test('NavBar is opaque on other pages', async ({ page }) => {
+    test('NavBar is opaque on other pages with z-50 stacking', async ({ page }) => {
       await page.goto('/login');
 
       const nav = page.getByRole('navigation');
       await expect(nav).toHaveClass(/bg-white/);
       await expect(nav).toHaveClass(/border-b/);
+      await expect(nav).toHaveClass(/z-50/);
     });
   });
 });
