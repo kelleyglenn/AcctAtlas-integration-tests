@@ -16,19 +16,17 @@ test.describe('My Submissions', () => {
     await expect(page.getByText(/my submissions/i)).toBeVisible({ timeout: PAGE_LOAD_TIMEOUT });
   });
 
-  test('submissions show status badges', async ({ page, request, browserName }) => {
+  test('new user sees empty submissions list', async ({ page, request, browserName }) => {
     // Arrange: create and login a user
-    const user = await createTestUser(request, { displayName: `Status Badges ${Date.now()}` });
+    const user = await createTestUser(request, { displayName: `Empty Subs ${Date.now()}` });
     expect(user.response.ok()).toBeTruthy();
     await loginViaUI(page, user.email, user.password, browserName);
 
     // Act: navigate to profile
     await page.goto('/profile');
 
-    // Assert: submissions section exists with status badge elements
+    // Assert: submissions section exists but is empty for a new user
     await expect(page.getByText(/my submissions/i)).toBeVisible({ timeout: PAGE_LOAD_TIMEOUT });
-    // For a new user with no submissions, the list should be empty
-    // This test verifies the section renders; status badges tested when videos exist
     await expect(page.locator('[data-testid="submission-item"]')).toHaveCount(0);
   });
 });

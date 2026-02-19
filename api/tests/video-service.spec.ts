@@ -321,10 +321,7 @@ test.describe('Video Service API', () => {
           const listBody = await listResponse.json();
           // Video should be PENDING (no rejection reason yet)
           const found = listBody.content.find((v: { id: string }) => v.id === video.id);
-          expect(found).toBeDefined();
-          expect(found.status).toBe('PENDING');
-          // rejectionReason should be null for non-rejected videos
-          expect(found.rejectionReason ?? null).toBeNull();
+          expect(found).toMatchObject({ status: 'PENDING', rejectionReason: null });
         }
         // If 409, video already exists from a prior run — test is still valid:
         // the schema test (rejectionReason field) was verified in a previous run

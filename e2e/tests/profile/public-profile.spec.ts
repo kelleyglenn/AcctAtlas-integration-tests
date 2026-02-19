@@ -1,14 +1,13 @@
 import { test, expect } from '@playwright/test';
+import { SEED_USERS } from '../../fixtures/seed-data';
 import { PAGE_LOAD_TIMEOUT } from '../../fixtures/test-constants';
 import { createTestUser, loginViaUI } from '../../fixtures/test-data';
 
 test.describe('Public Profile', () => {
-  // Seed user ID from dev seed data (submitter of all seed videos)
-  // This is "Trusted User" who submitted all 10 seed videos (8 approved, 2 rejected)
-  const seedUserId = '00000000-0000-0000-0000-000000000003';
+  const seedUser = SEED_USERS.TRUSTED_SUBMITTER;
 
   test('public profile shows display name and avatar', async ({ page }) => {
-    await page.goto(`/users/${seedUserId}`);
+    await page.goto(`/users/${seedUser.id}`);
     // Should show display name (from seed data: "Trusted User")
     await expect(page.getByRole('heading')).toBeVisible({ timeout: PAGE_LOAD_TIMEOUT });
     // Should show member since
@@ -16,7 +15,7 @@ test.describe('Public Profile', () => {
   });
 
   test('public profile shows approved video count', async ({ page }) => {
-    await page.goto(`/users/${seedUserId}`);
+    await page.goto(`/users/${seedUser.id}`);
     await expect(page.getByText(/\d+ approved video/i)).toBeVisible({ timeout: PAGE_LOAD_TIMEOUT });
   });
 
@@ -32,7 +31,7 @@ test.describe('Public Profile', () => {
   }) => {
     const user = await createTestUser(request);
     await loginViaUI(page, user.email, user.password, browserName);
-    await page.goto(`/users/${seedUserId}`);
+    await page.goto(`/users/${seedUser.id}`);
     await expect(page.getByRole('heading', { level: 1 })).toBeVisible({
       timeout: PAGE_LOAD_TIMEOUT,
     });
@@ -42,7 +41,7 @@ test.describe('Public Profile', () => {
   });
 
   test('public profile hides trust tier badge when not authenticated', async ({ page }) => {
-    await page.goto(`/users/${seedUserId}`);
+    await page.goto(`/users/${seedUser.id}`);
     await expect(page.getByRole('heading')).toBeVisible({ timeout: PAGE_LOAD_TIMEOUT });
     await expect(page.getByTestId('trust-tier-badge')).not.toBeVisible();
   });
