@@ -13,6 +13,7 @@
 ## Task 1: Create Seed Data Fixture
 
 **Files:**
+
 - Create: `e2e/fixtures/seed-data.ts`
 
 **Step 1: Create the seed data constants file**
@@ -27,45 +28,45 @@
  */
 export const SEED_VIDEOS = {
   SF_FIRST_AMENDMENT: {
-    id: '10000000-0000-0000-0000-000000000001',
-    youtubeId: 'RngL8_3k0C0',
-    title: 'Northern California Government Building Audit',
-    amendments: ['FIRST'],
-    participants: ['POLICE', 'GOVERNMENT'],
-    city: 'San Francisco',
-    state: 'CA',
+    id: "10000000-0000-0000-0000-000000000001",
+    youtubeId: "RngL8_3k0C0",
+    title: "Northern California Government Building Audit",
+    amendments: ["FIRST"],
+    participants: ["POLICE", "GOVERNMENT"],
+    city: "San Francisco",
+    state: "CA",
   },
   OAKLAND_MULTI_AMENDMENT: {
-    id: '10000000-0000-0000-0000-000000000002',
-    youtubeId: 'nQRpazbSRf4',
-    title: 'East Lansing Police Department Audit Analysis',
-    amendments: ['FIRST', 'FOURTH'],
-    participants: ['POLICE'],
-    city: 'Oakland',
-    state: 'CA',
+    id: "10000000-0000-0000-0000-000000000002",
+    youtubeId: "nQRpazbSRf4",
+    title: "East Lansing Police Department Audit Analysis",
+    amendments: ["FIRST", "FOURTH"],
+    participants: ["POLICE"],
+    city: "Oakland",
+    state: "CA",
   },
   SAN_ANTONIO_BUSINESS: {
-    id: '10000000-0000-0000-0000-000000000006',
-    youtubeId: '-kNacBPsNxo',
-    title: 'San Antonio Strip Mall Encounter',
-    amendments: ['FIRST'],
-    participants: ['POLICE', 'BUSINESS'],
-    city: 'San Antonio',
-    state: 'TX',
+    id: "10000000-0000-0000-0000-000000000006",
+    youtubeId: "-kNacBPsNxo",
+    title: "San Antonio Strip Mall Encounter",
+    amendments: ["FIRST"],
+    participants: ["POLICE", "BUSINESS"],
+    city: "San Antonio",
+    state: "TX",
   },
   SILVERTHORNE_GOVERNMENT: {
-    id: '10000000-0000-0000-0000-000000000008',
-    youtubeId: 'hkhrXPur4ws',
-    title: 'Silverthorne Post Office Audit',
-    amendments: ['FIRST'],
-    participants: ['GOVERNMENT'],
-    city: 'Silverthorne',
-    state: 'CO',
+    id: "10000000-0000-0000-0000-000000000008",
+    youtubeId: "hkhrXPur4ws",
+    title: "Silverthorne Post Office Audit",
+    amendments: ["FIRST"],
+    participants: ["GOVERNMENT"],
+    city: "Silverthorne",
+    state: "CO",
   },
 } as const;
 
 /** Non-existent ID for 404 tests */
-export const NON_EXISTENT_VIDEO_ID = '00000000-0000-0000-0000-000000000000';
+export const NON_EXISTENT_VIDEO_ID = "00000000-0000-0000-0000-000000000000";
 
 /** Total count of seed videos */
 export const SEED_VIDEO_COUNT = 10;
@@ -88,27 +89,28 @@ git commit -m "feat(e2e): add seed data fixture for map tests"
 ## Task 2: Create Map Browse Test File with First Test
 
 **Files:**
+
 - Create: `e2e/tests/map/map-browse.spec.ts`
 
 **Step 1: Create test file with map loads test**
 
 ```typescript
 // e2e/tests/map/map-browse.spec.ts
-import { test, expect } from '@playwright/test';
-import { SEED_VIDEOS } from '../../fixtures/seed-data';
+import { test, expect } from "@playwright/test";
+import { SEED_VIDEOS } from "../../fixtures/seed-data";
 
-test.describe('Map Browse', () => {
-  test('map page loads with video markers', async ({ page, browserName }) => {
+test.describe("Map Browse", () => {
+  test("map page loads with video markers", async ({ page, browserName }) => {
     // Act: navigate to map page
-    await page.goto('/map');
+    await page.goto("/map");
 
     // Wait for map to render (WebGL can be slow)
-    if (browserName === 'webkit') {
+    if (browserName === "webkit") {
       await page.waitForTimeout(500);
     }
 
     // Assert: at least one video marker is visible
-    const markers = page.locator('[data-video-id]');
+    const markers = page.locator("[data-video-id]");
     await expect(markers.first()).toBeVisible({ timeout: 10000 });
 
     // Assert: multiple markers present (seed data has 10 videos)
@@ -135,6 +137,7 @@ git commit -m "feat(e2e): add map page loads test"
 ## Task 3: Add Marker Click and Popup Tests
 
 **Files:**
+
 - Modify: `e2e/tests/map/map-browse.spec.ts`
 
 **Step 1: Add marker click test**
@@ -142,38 +145,44 @@ git commit -m "feat(e2e): add map page loads test"
 Add after the first test:
 
 ```typescript
-  test('clicking marker shows video info popup', async ({ page, browserName }) => {
-    // Arrange: go to map
-    await page.goto('/map');
-    if (browserName === 'webkit') {
-      await page.waitForTimeout(500);
-    }
+test("clicking marker shows video info popup", async ({
+  page,
+  browserName,
+}) => {
+  // Arrange: go to map
+  await page.goto("/map");
+  if (browserName === "webkit") {
+    await page.waitForTimeout(500);
+  }
 
-    // Act: click the first marker
-    const marker = page.locator('[data-video-id]').first();
-    await expect(marker).toBeVisible({ timeout: 10000 });
-    await marker.click();
+  // Act: click the first marker
+  const marker = page.locator("[data-video-id]").first();
+  await expect(marker).toBeVisible({ timeout: 10000 });
+  await marker.click();
 
-    // Assert: popup appears with View Video button
-    await expect(page.getByRole('button', { name: /View Video/i })).toBeVisible();
-  });
+  // Assert: popup appears with View Video button
+  await expect(page.getByRole("button", { name: /View Video/i })).toBeVisible();
+});
 
-  test('clicking "View Video" navigates to detail page', async ({ page, browserName }) => {
-    // Arrange: go to map and click marker
-    await page.goto('/map');
-    if (browserName === 'webkit') {
-      await page.waitForTimeout(500);
-    }
-    const marker = page.locator('[data-video-id]').first();
-    await expect(marker).toBeVisible({ timeout: 10000 });
-    await marker.click();
+test('clicking "View Video" navigates to detail page', async ({
+  page,
+  browserName,
+}) => {
+  // Arrange: go to map and click marker
+  await page.goto("/map");
+  if (browserName === "webkit") {
+    await page.waitForTimeout(500);
+  }
+  const marker = page.locator("[data-video-id]").first();
+  await expect(marker).toBeVisible({ timeout: 10000 });
+  await marker.click();
 
-    // Act: click View Video button
-    await page.getByRole('button', { name: /View Video/i }).click();
+  // Act: click View Video button
+  await page.getByRole("button", { name: /View Video/i }).click();
 
-    // Assert: navigated to video detail page
-    await expect(page).toHaveURL(/\/videos\/[a-f0-9-]+/);
-  });
+  // Assert: navigated to video detail page
+  await expect(page).toHaveURL(/\/videos\/[a-f0-9-]+/);
+});
 ```
 
 **Step 2: Run tests**
@@ -193,51 +202,62 @@ git commit -m "feat(e2e): add marker click and popup tests"
 ## Task 4: Add Filter Tests
 
 **Files:**
+
 - Modify: `e2e/tests/map/map-browse.spec.ts`
 
 **Step 1: Add amendment filter test**
 
 ```typescript
-  test('filter by amendment updates video list', async ({ page, browserName }) => {
-    // Arrange: go to map
-    await page.goto('/map');
-    if (browserName === 'webkit') {
-      await page.waitForTimeout(500);
-    }
-    await expect(page.locator('[data-video-id]').first()).toBeVisible({ timeout: 10000 });
-
-    // Get initial video count in list
-    const videoList = page.locator('[data-testid="video-list-item"]');
-    const initialCount = await videoList.count();
-
-    // Act: click 4th Amendment filter (fewer videos have this)
-    await page.getByRole('button', { name: /4th/i }).click();
-
-    // Assert: list is filtered (count changes or specific video visible)
-    // Note: All seed videos have FIRST, only 3 have FOURTH
-    await page.waitForTimeout(300); // Allow filter to apply
-    const filteredCount = await videoList.count();
-    expect(filteredCount).toBeLessThanOrEqual(initialCount);
+test("filter by amendment updates video list", async ({
+  page,
+  browserName,
+}) => {
+  // Arrange: go to map
+  await page.goto("/map");
+  if (browserName === "webkit") {
+    await page.waitForTimeout(500);
+  }
+  await expect(page.locator("[data-video-id]").first()).toBeVisible({
+    timeout: 10000,
   });
 
-  test('filter by participant updates video list', async ({ page, browserName }) => {
-    // Arrange: go to map
-    await page.goto('/map');
-    if (browserName === 'webkit') {
-      await page.waitForTimeout(500);
-    }
-    await expect(page.locator('[data-video-id]').first()).toBeVisible({ timeout: 10000 });
+  // Get initial video count in list
+  const videoList = page.locator('[data-testid="video-list-item"]');
+  const initialCount = await videoList.count();
 
-    // Act: click Government filter
-    await page.getByRole('button', { name: /Government/i }).click();
+  // Act: click 4th Amendment filter (fewer videos have this)
+  await page.getByRole("button", { name: /4th/i }).click();
 
-    // Assert: Government-tagged videos visible
-    await page.waitForTimeout(300);
-    // The filter should show only videos with GOVERNMENT participant
-    const videoList = page.locator('[data-testid="video-list-item"]');
-    const count = await videoList.count();
-    expect(count).toBeGreaterThan(0);
+  // Assert: list is filtered (count changes or specific video visible)
+  // Note: All seed videos have FIRST, only 3 have FOURTH
+  await page.waitForTimeout(300); // Allow filter to apply
+  const filteredCount = await videoList.count();
+  expect(filteredCount).toBeLessThanOrEqual(initialCount);
+});
+
+test("filter by participant updates video list", async ({
+  page,
+  browserName,
+}) => {
+  // Arrange: go to map
+  await page.goto("/map");
+  if (browserName === "webkit") {
+    await page.waitForTimeout(500);
+  }
+  await expect(page.locator("[data-video-id]").first()).toBeVisible({
+    timeout: 10000,
   });
+
+  // Act: click Government filter
+  await page.getByRole("button", { name: /Government/i }).click();
+
+  // Assert: Government-tagged videos visible
+  await page.waitForTimeout(300);
+  // The filter should show only videos with GOVERNMENT participant
+  const videoList = page.locator('[data-testid="video-list-item"]');
+  const count = await videoList.count();
+  expect(count).toBeGreaterThan(0);
+});
 ```
 
 **Step 2: Run tests**
@@ -257,47 +277,58 @@ git commit -m "feat(e2e): add filter tests for amendments and participants"
 ## Task 5: Add Location Search and Video List Tests
 
 **Files:**
+
 - Modify: `e2e/tests/map/map-browse.spec.ts`
 
 **Step 1: Add location search test**
 
 ```typescript
-  test('location search flies to location and shows toast', async ({ page, browserName }) => {
-    // Arrange: go to map
-    await page.goto('/map');
-    if (browserName === 'webkit') {
-      await page.waitForTimeout(500);
-    }
+test("location search flies to location and shows toast", async ({
+  page,
+  browserName,
+}) => {
+  // Arrange: go to map
+  await page.goto("/map");
+  if (browserName === "webkit") {
+    await page.waitForTimeout(500);
+  }
 
-    // Act: type in search box and select result
-    const searchBox = page.getByRole('combobox').or(page.locator('input[placeholder*="Search"]'));
-    await searchBox.fill('Denver');
+  // Act: type in search box and select result
+  const searchBox = page
+    .getByRole("combobox")
+    .or(page.locator('input[placeholder*="Search"]'));
+  await searchBox.fill("Denver");
 
-    // Wait for autocomplete and click first result
-    const suggestion = page.getByRole('option').first();
-    await expect(suggestion).toBeVisible({ timeout: 5000 });
-    await suggestion.click();
+  // Wait for autocomplete and click first result
+  const suggestion = page.getByRole("option").first();
+  await expect(suggestion).toBeVisible({ timeout: 5000 });
+  await suggestion.click();
 
-    // Assert: toast appears
-    await expect(page.getByText(/Moved to/i)).toBeVisible({ timeout: 5000 });
+  // Assert: toast appears
+  await expect(page.getByText(/Moved to/i)).toBeVisible({ timeout: 5000 });
+});
+
+test("clicking video in list shows marker popup", async ({
+  page,
+  browserName,
+}) => {
+  // Arrange: go to map
+  await page.goto("/map");
+  if (browserName === "webkit") {
+    await page.waitForTimeout(500);
+  }
+  await expect(page.locator("[data-video-id]").first()).toBeVisible({
+    timeout: 10000,
   });
 
-  test('clicking video in list shows marker popup', async ({ page, browserName }) => {
-    // Arrange: go to map
-    await page.goto('/map');
-    if (browserName === 'webkit') {
-      await page.waitForTimeout(500);
-    }
-    await expect(page.locator('[data-video-id]').first()).toBeVisible({ timeout: 10000 });
+  // Act: click a video in the side panel list
+  const listItem = page.locator('[data-testid="video-list-item"]').first();
+  await expect(listItem).toBeVisible();
+  await listItem.click();
 
-    // Act: click a video in the side panel list
-    const listItem = page.locator('[data-testid="video-list-item"]').first();
-    await expect(listItem).toBeVisible();
-    await listItem.click();
-
-    // Assert: popup appears with View Video button
-    await expect(page.getByRole('button', { name: /View Video/i })).toBeVisible();
-  });
+  // Assert: popup appears with View Video button
+  await expect(page.getByRole("button", { name: /View Video/i })).toBeVisible();
+});
 ```
 
 **Step 2: Run tests**
@@ -317,17 +348,18 @@ git commit -m "feat(e2e): add location search and video list interaction tests"
 ## Task 6: Create Video Detail Test File
 
 **Files:**
+
 - Create: `e2e/tests/videos/video-detail.spec.ts`
 
 **Step 1: Create test file with basic tests**
 
 ```typescript
 // e2e/tests/videos/video-detail.spec.ts
-import { test, expect } from '@playwright/test';
-import { SEED_VIDEOS, NON_EXISTENT_VIDEO_ID } from '../../fixtures/seed-data';
+import { test, expect } from "@playwright/test";
+import { SEED_VIDEOS, NON_EXISTENT_VIDEO_ID } from "../../fixtures/seed-data";
 
-test.describe('Video Detail', () => {
-  test('video detail page shows video information', async ({ page }) => {
+test.describe("Video Detail", () => {
+  test("video detail page shows video information", async ({ page }) => {
     // Arrange: navigate directly to a known video
     const video = SEED_VIDEOS.SF_FIRST_AMENDMENT;
     await page.goto(`/videos/${video.id}`);
@@ -336,14 +368,18 @@ test.describe('Video Detail', () => {
     await expect(page.getByText(video.title)).toBeVisible({ timeout: 10000 });
 
     // Assert: YouTube embed is present
-    const iframe = page.locator(`iframe[src*="youtube.com/embed/${video.youtubeId}"]`);
+    const iframe = page.locator(
+      `iframe[src*="youtube.com/embed/${video.youtubeId}"]`,
+    );
     await expect(iframe).toBeVisible();
 
     // Assert: amendment badge is visible
-    await expect(page.getByText(/1st/i).or(page.getByText(/FIRST/i))).toBeVisible();
+    await expect(
+      page.getByText(/1st/i).or(page.getByText(/FIRST/i)),
+    ).toBeVisible();
   });
 
-  test('video detail page shows location information', async ({ page }) => {
+  test("video detail page shows location information", async ({ page }) => {
     // Arrange: navigate to known video
     const video = SEED_VIDEOS.SF_FIRST_AMENDMENT;
     await page.goto(`/videos/${video.id}`);
@@ -353,25 +389,31 @@ test.describe('Video Detail', () => {
     await expect(page.getByText(video.state)).toBeVisible();
   });
 
-  test('back button returns to previous page', async ({ page, browserName }) => {
+  test("back button returns to previous page", async ({
+    page,
+    browserName,
+  }) => {
     // Arrange: start at map, navigate to video
-    await page.goto('/map');
-    if (browserName === 'webkit') {
+    await page.goto("/map");
+    if (browserName === "webkit") {
       await page.waitForTimeout(500);
     }
 
     // Click marker and go to video
-    const marker = page.locator('[data-video-id]').first();
+    const marker = page.locator("[data-video-id]").first();
     await expect(marker).toBeVisible({ timeout: 10000 });
     await marker.click();
-    await page.getByRole('button', { name: /View Video/i }).click();
+    await page.getByRole("button", { name: /View Video/i }).click();
     await expect(page).toHaveURL(/\/videos\//);
 
     // Act: click back button
-    await page.getByRole('button', { name: /back/i }).or(page.locator('[aria-label="Go back"]')).click();
+    await page
+      .getByRole("button", { name: /back/i })
+      .or(page.locator('[aria-label="Go back"]'))
+      .click();
 
     // Assert: back at map
-    await expect(page).toHaveURL('/map');
+    await expect(page).toHaveURL("/map");
   });
 });
 ```
@@ -393,46 +435,50 @@ git commit -m "feat(e2e): add video detail page tests"
 ## Task 7: Add Remaining Video Detail Tests
 
 **Files:**
+
 - Modify: `e2e/tests/videos/video-detail.spec.ts`
 
 **Step 1: Add YouTube link, Back to Map, and 404 tests**
 
 ```typescript
-  test('"Watch on YouTube" link has correct URL', async ({ page }) => {
-    // Arrange: navigate to known video
-    const video = SEED_VIDEOS.SF_FIRST_AMENDMENT;
-    await page.goto(`/videos/${video.id}`);
+test('"Watch on YouTube" link has correct URL', async ({ page }) => {
+  // Arrange: navigate to known video
+  const video = SEED_VIDEOS.SF_FIRST_AMENDMENT;
+  await page.goto(`/videos/${video.id}`);
 
-    // Assert: YouTube link has correct href
-    const youtubeLink = page.getByRole('link', { name: /Watch on YouTube/i });
-    await expect(youtubeLink).toBeVisible({ timeout: 10000 });
-    await expect(youtubeLink).toHaveAttribute('href', `https://www.youtube.com/watch?v=${video.youtubeId}`);
-    await expect(youtubeLink).toHaveAttribute('target', '_blank');
-  });
+  // Assert: YouTube link has correct href
+  const youtubeLink = page.getByRole("link", { name: /Watch on YouTube/i });
+  await expect(youtubeLink).toBeVisible({ timeout: 10000 });
+  await expect(youtubeLink).toHaveAttribute(
+    "href",
+    `https://www.youtube.com/watch?v=${video.youtubeId}`,
+  );
+  await expect(youtubeLink).toHaveAttribute("target", "_blank");
+});
 
-  test('"Back to Map" button navigates to map', async ({ page }) => {
-    // Arrange: navigate to known video
-    const video = SEED_VIDEOS.SF_FIRST_AMENDMENT;
-    await page.goto(`/videos/${video.id}`);
-    await expect(page.getByText(video.title)).toBeVisible({ timeout: 10000 });
+test('"Back to Map" button navigates to map', async ({ page }) => {
+  // Arrange: navigate to known video
+  const video = SEED_VIDEOS.SF_FIRST_AMENDMENT;
+  await page.goto(`/videos/${video.id}`);
+  await expect(page.getByText(video.title)).toBeVisible({ timeout: 10000 });
 
-    // Act: click Back to Map
-    await page.getByRole('link', { name: /Back to Map/i }).click();
+  // Act: click Back to Map
+  await page.getByRole("link", { name: /Back to Map/i }).click();
 
-    // Assert: at map page
-    await expect(page).toHaveURL('/map');
-  });
+  // Assert: at map page
+  await expect(page).toHaveURL("/map");
+});
 
-  test('shows error for non-existent video', async ({ page }) => {
-    // Act: navigate to non-existent video
-    await page.goto(`/videos/${NON_EXISTENT_VIDEO_ID}`);
+test("shows error for non-existent video", async ({ page }) => {
+  // Act: navigate to non-existent video
+  await page.goto(`/videos/${NON_EXISTENT_VIDEO_ID}`);
 
-    // Assert: error message shown
-    await expect(page.getByText(/not found/i)).toBeVisible({ timeout: 10000 });
+  // Assert: error message shown
+  await expect(page.getByText(/not found/i)).toBeVisible({ timeout: 10000 });
 
-    // Assert: link back to map exists
-    await expect(page.getByRole('link', { name: /map/i })).toBeVisible();
-  });
+  // Assert: link back to map exists
+  await expect(page.getByRole("link", { name: /map/i })).toBeVisible();
+});
 ```
 
 **Step 2: Run all video detail tests**
@@ -473,11 +519,11 @@ Modify `README.md` E2E Tests section:
 ```markdown
 ### E2E Tests (22 tests)
 
-| Feature | Tests | Coverage |
-|---------|-------|----------|
-| Auth | 9 | Login flow across 3 browsers |
-| Map | 7 | Map browsing, markers, filters, search |
-| Video | 6 | Video detail page, navigation, 404 |
+| Feature | Tests | Coverage                               |
+| ------- | ----- | -------------------------------------- |
+| Auth    | 9     | Login flow across 3 browsers           |
+| Map     | 7     | Map browsing, markers, filters, search |
+| Video   | 6     | Video detail page, navigation, 404     |
 ```
 
 **Step 5: Final commit**

@@ -1,9 +1,9 @@
-import { test, expect } from '@playwright/test';
-import { API_URL } from '../fixtures/api-helpers.js';
+import { test, expect } from "@playwright/test";
+import { API_URL } from "../fixtures/api-helpers.js";
 
-test.describe('Search Service API', () => {
-  test.describe('Video Search', () => {
-    test('returns empty results when no videos exist', async ({ request }) => {
+test.describe("Search Service API", () => {
+  test.describe("Video Search", () => {
+    test("returns empty results when no videos exist", async ({ request }) => {
       const response = await request.get(`${API_URL}/search`);
 
       expect(response.ok()).toBeTruthy();
@@ -14,10 +14,10 @@ test.describe('Search Service API', () => {
       expect(body.pagination.totalElements).toBeGreaterThanOrEqual(0);
     });
 
-    test('supports text query search', async ({ request }) => {
+    test("supports text query search", async ({ request }) => {
       const response = await request.get(`${API_URL}/search`, {
         params: {
-          q: 'police audit',
+          q: "police audit",
         },
       });
 
@@ -28,10 +28,10 @@ test.describe('Search Service API', () => {
       expect(body.pagination).toBeDefined();
     });
 
-    test('supports amendment filter', async ({ request }) => {
+    test("supports amendment filter", async ({ request }) => {
       const response = await request.get(`${API_URL}/search`, {
         params: {
-          amendments: 'FIRST',
+          amendments: "FIRST",
         },
       });
 
@@ -41,14 +41,14 @@ test.describe('Search Service API', () => {
       expect(body.results).toBeInstanceOf(Array);
       // All results should have FIRST amendment if any exist
       for (const result of body.results) {
-        expect(result.amendments).toContain('FIRST');
+        expect(result.amendments).toContain("FIRST");
       }
     });
 
-    test('supports participant filter', async ({ request }) => {
+    test("supports participant filter", async ({ request }) => {
       const response = await request.get(`${API_URL}/search`, {
         params: {
-          participants: 'POLICE',
+          participants: "POLICE",
         },
       });
 
@@ -58,14 +58,14 @@ test.describe('Search Service API', () => {
       expect(body.results).toBeInstanceOf(Array);
       // All results should have POLICE participant if any exist
       for (const result of body.results) {
-        expect(result.participants).toContain('POLICE');
+        expect(result.participants).toContain("POLICE");
       }
     });
 
-    test('supports SECURITY participant filter', async ({ request }) => {
+    test("supports SECURITY participant filter", async ({ request }) => {
       const response = await request.get(`${API_URL}/search`, {
         params: {
-          participants: 'SECURITY',
+          participants: "SECURITY",
         },
       });
 
@@ -75,14 +75,14 @@ test.describe('Search Service API', () => {
       expect(body.results).toBeInstanceOf(Array);
       // All results should have SECURITY participant if any exist
       for (const result of body.results) {
-        expect(result.participants).toContain('SECURITY');
+        expect(result.participants).toContain("SECURITY");
       }
     });
 
-    test('supports state filter', async ({ request }) => {
+    test("supports state filter", async ({ request }) => {
       const response = await request.get(`${API_URL}/search`, {
         params: {
-          state: 'AZ',
+          state: "AZ",
         },
       });
 
@@ -92,7 +92,7 @@ test.describe('Search Service API', () => {
       expect(body.results).toBeInstanceOf(Array);
     });
 
-    test('supports pagination', async ({ request }) => {
+    test("supports pagination", async ({ request }) => {
       const response = await request.get(`${API_URL}/search`, {
         params: {
           page: 0,
@@ -107,11 +107,11 @@ test.describe('Search Service API', () => {
       expect(body.pagination.size).toBe(10);
     });
 
-    test('supports bbox filter', async ({ request }) => {
+    test("supports bbox filter", async ({ request }) => {
       // SF Bay Area bounding box: should match ~5 CA seed videos
       const response = await request.get(`${API_URL}/search`, {
         params: {
-          bbox: '-123,37,-121,38',
+          bbox: "-123,37,-121,38",
         },
       });
 
@@ -133,37 +133,41 @@ test.describe('Search Service API', () => {
       }
     });
 
-    test('bbox combined with other filters narrows results', async ({ request }) => {
+    test("bbox combined with other filters narrows results", async ({
+      request,
+    }) => {
       // SF Bay Area bbox + FOURTH amendment filter
       const bboxOnly = await request.get(`${API_URL}/search`, {
         params: {
-          bbox: '-123,37,-121,38',
+          bbox: "-123,37,-121,38",
         },
       });
       const bboxBody = await bboxOnly.json();
 
       const bboxPlusAmendment = await request.get(`${API_URL}/search`, {
         params: {
-          bbox: '-123,37,-121,38',
-          amendments: 'FOURTH',
+          bbox: "-123,37,-121,38",
+          amendments: "FOURTH",
         },
       });
       const combinedBody = await bboxPlusAmendment.json();
 
       expect(bboxPlusAmendment.ok()).toBeTruthy();
-      expect(combinedBody.results.length).toBeLessThanOrEqual(bboxBody.results.length);
+      expect(combinedBody.results.length).toBeLessThanOrEqual(
+        bboxBody.results.length,
+      );
       // All combined results should have FOURTH amendment
       for (const result of combinedBody.results) {
-        expect(result.amendments).toContain('FOURTH');
+        expect(result.amendments).toContain("FOURTH");
       }
     });
 
-    test('supports multiple filters combined', async ({ request }) => {
+    test("supports multiple filters combined", async ({ request }) => {
       const response = await request.get(`${API_URL}/search`, {
         params: {
-          amendments: 'FIRST',
-          participants: 'POLICE',
-          state: 'AZ',
+          amendments: "FIRST",
+          participants: "POLICE",
+          state: "AZ",
         },
       });
 
@@ -174,8 +178,8 @@ test.describe('Search Service API', () => {
     });
   });
 
-  test.describe('Search is Public', () => {
-    test('does not require authentication', async ({ request }) => {
+  test.describe("Search is Public", () => {
+    test("does not require authentication", async ({ request }) => {
       // Search should work without auth header
       const response = await request.get(`${API_URL}/search`);
 

@@ -1,46 +1,48 @@
-import { test, expect } from '@playwright/test';
+import { test, expect } from "@playwright/test";
 import {
   API_URL,
   createTestUser,
   createTestLocation,
   authHeaders,
   deleteTestLocations,
-} from '../fixtures/api-helpers.js';
+} from "../fixtures/api-helpers.js";
 
-test.describe('Video Submission Flow', () => {
+test.describe("Video Submission Flow", () => {
   const createdLocationIds: string[] = [];
 
   test.afterAll(() => {
     deleteTestLocations(createdLocationIds);
   });
 
-  test.describe('Preview Endpoint', () => {
-    test('preview endpoint returns YouTube metadata', async ({ request }) => {
+  test.describe("Preview Endpoint", () => {
+    test("preview endpoint returns YouTube metadata", async ({ request }) => {
       const response = await request.get(`${API_URL}/videos/preview`, {
-        params: { youtubeUrl: 'https://www.youtube.com/watch?v=dQw4w9WgXcQ' },
+        params: { youtubeUrl: "https://www.youtube.com/watch?v=dQw4w9WgXcQ" },
       });
 
       expect(response.ok()).toBeTruthy();
       const body = await response.json();
 
-      expect(body.youtubeId).toBe('dQw4w9WgXcQ');
+      expect(body.youtubeId).toBe("dQw4w9WgXcQ");
       expect(body.title).toBeTruthy();
       expect(body.thumbnailUrl).toBeTruthy();
       expect(body.channelName).toBeTruthy();
       expect(body.alreadyExists).toBeDefined();
     });
 
-    test('preview endpoint requires valid YouTube URL', async ({ request }) => {
+    test("preview endpoint requires valid YouTube URL", async ({ request }) => {
       const response = await request.get(`${API_URL}/videos/preview`, {
-        params: { youtubeUrl: 'not-a-url' },
+        params: { youtubeUrl: "not-a-url" },
       });
 
       expect(response.status()).toBe(400);
     });
 
-    test('preview endpoint does not require authentication', async ({ request }) => {
+    test("preview endpoint does not require authentication", async ({
+      request,
+    }) => {
       const response = await request.get(`${API_URL}/videos/preview`, {
-        params: { youtubeUrl: 'https://www.youtube.com/watch?v=dQw4w9WgXcQ' },
+        params: { youtubeUrl: "https://www.youtube.com/watch?v=dQw4w9WgXcQ" },
       });
 
       expect(response.ok()).toBeTruthy();
@@ -48,8 +50,8 @@ test.describe('Video Submission Flow', () => {
     });
   });
 
-  test.describe('Full Submission Flow', () => {
-    test('full submission flow: preview, create location, create video, verify detail', async ({
+  test.describe("Full Submission Flow", () => {
+    test("full submission flow: preview, create location, create video, verify detail", async ({
       request,
     }) => {
       // 1. Create test user
@@ -57,18 +59,18 @@ test.describe('Video Submission Flow', () => {
 
       // 2. Preview a video
       const previewResponse = await request.get(`${API_URL}/videos/preview`, {
-        params: { youtubeUrl: 'https://www.youtube.com/watch?v=dQw4w9WgXcQ' },
+        params: { youtubeUrl: "https://www.youtube.com/watch?v=dQw4w9WgXcQ" },
       });
       expect(previewResponse.ok()).toBeTruthy();
       const preview = await previewResponse.json();
-      expect(preview.youtubeId).toBe('dQw4w9WgXcQ');
+      expect(preview.youtubeId).toBe("dQw4w9WgXcQ");
       expect(preview.title).toBeTruthy();
 
       // 3. If video already exists (from previous run), verify detail directly
       if (preview.alreadyExists) {
         const detailResponse = await request.get(
           `${API_URL}/videos/${preview.existingVideoId}`,
-          { headers: authHeaders(user.accessToken) }
+          { headers: authHeaders(user.accessToken) },
         );
         if (!detailResponse.ok()) {
           // Video exists but current user may not have permission (e.g., PENDING status, different owner)
@@ -76,7 +78,7 @@ test.describe('Video Submission Flow', () => {
           return;
         }
         const detail = await detailResponse.json();
-        expect(detail.youtubeId).toBe('dQw4w9WgXcQ');
+        expect(detail.youtubeId).toBe("dQw4w9WgXcQ");
         return;
       }
 
@@ -87,9 +89,9 @@ test.describe('Video Submission Flow', () => {
       // 5. Submit the video with that location
       const createResponse = await request.post(`${API_URL}/videos`, {
         data: {
-          youtubeUrl: 'https://www.youtube.com/watch?v=dQw4w9WgXcQ',
-          amendments: ['FIRST'],
-          participants: ['POLICE'],
+          youtubeUrl: "https://www.youtube.com/watch?v=dQw4w9WgXcQ",
+          amendments: ["FIRST"],
+          participants: ["POLICE"],
           locationId: location.id,
         },
         headers: authHeaders(user.accessToken),
@@ -99,24 +101,27 @@ test.describe('Video Submission Flow', () => {
       expect(created.id).toBeTruthy();
 
       // 6. Verify detail returns with locations
-      const detailResponse = await request.get(`${API_URL}/videos/${created.id}`, {
-        headers: authHeaders(user.accessToken),
-      });
+      const detailResponse = await request.get(
+        `${API_URL}/videos/${created.id}`,
+        {
+          headers: authHeaders(user.accessToken),
+        },
+      );
       expect(detailResponse.ok()).toBeTruthy();
       const detail = await detailResponse.json();
-      expect(detail.youtubeId).toBe('dQw4w9WgXcQ');
-      expect(detail.amendments).toContain('FIRST');
+      expect(detail.youtubeId).toBe("dQw4w9WgXcQ");
+      expect(detail.amendments).toContain("FIRST");
       expect(detail.locations).toBeDefined();
       expect(detail.locations.length).toBeGreaterThan(0);
     });
 
-    test('submission without auth returns 401/403', async ({ request }) => {
+    test("submission without auth returns 401/403", async ({ request }) => {
       const response = await request.post(`${API_URL}/videos`, {
         data: {
-          youtubeUrl: 'https://www.youtube.com/watch?v=dQw4w9WgXcQ',
-          amendments: ['FIRST'],
-          participants: ['POLICE'],
-          locationId: '00000000-0000-0000-0000-000000000000',
+          youtubeUrl: "https://www.youtube.com/watch?v=dQw4w9WgXcQ",
+          amendments: ["FIRST"],
+          participants: ["POLICE"],
+          locationId: "00000000-0000-0000-0000-000000000000",
         },
       });
 

@@ -1,4 +1,4 @@
-import { Page } from '@playwright/test';
+import { Page } from "@playwright/test";
 
 interface MockLocation {
   name: string;
@@ -8,13 +8,13 @@ interface MockLocation {
 
 const MOCK_LOCATIONS: Record<string, MockLocation> = {
   denver: {
-    name: 'Denver',
-    placeFormatted: 'Colorado, United States',
+    name: "Denver",
+    placeFormatted: "Colorado, United States",
     coordinates: [-104.9903, 39.7392],
   },
-  'san antonio': {
-    name: 'San Antonio',
-    placeFormatted: 'Texas, United States',
+  "san antonio": {
+    name: "San Antonio",
+    placeFormatted: "Texas, United States",
     coordinates: [-98.4936, 29.4241],
   },
 };
@@ -24,7 +24,7 @@ function findMockLocation(query: string): MockLocation {
   return (
     MOCK_LOCATIONS[key] ?? {
       name: query,
-      placeFormatted: 'United States',
+      placeFormatted: "United States",
       coordinates: [-98.5795, 39.8283],
     }
   );
@@ -38,53 +38,53 @@ function findMockLocation(query: string): MockLocation {
  */
 export async function mockMapboxSearchAPI(page: Page): Promise<void> {
   // Intercept suggest requests
-  await page.route('**/search/searchbox/v1/suggest**', (route) => {
+  await page.route("**/search/searchbox/v1/suggest**", (route) => {
     const url = new URL(route.request().url());
-    const query = url.searchParams.get('q') ?? '';
+    const query = url.searchParams.get("q") ?? "";
     const location = findMockLocation(query);
-    const mapboxId = location.name.toLowerCase().replace(/\s+/g, '-');
+    const mapboxId = location.name.toLowerCase().replace(/\s+/g, "-");
 
     route.fulfill({
       status: 200,
-      contentType: 'application/json',
+      contentType: "application/json",
       body: JSON.stringify({
         suggestions: [
           {
             name: location.name,
             mapbox_id: mapboxId,
-            feature_type: 'place',
+            feature_type: "place",
             place_formatted: location.placeFormatted,
-            address: '',
+            address: "",
             full_address: `${location.name}, ${location.placeFormatted}`,
-            language: 'en',
-            maki: 'marker',
+            language: "en",
+            maki: "marker",
             context: {},
           },
         ],
-        attribution: 'mocked',
+        attribution: "mocked",
       }),
     });
   });
 
   // Intercept retrieve requests
-  await page.route('**/search/searchbox/v1/retrieve/**', (route) => {
+  await page.route("**/search/searchbox/v1/retrieve/**", (route) => {
     const url = new URL(route.request().url());
     // mapbox_id is the last path segment (URL-encoded)
-    const pathParts = url.pathname.split('/');
+    const pathParts = url.pathname.split("/");
     const mapboxId = decodeURIComponent(pathParts[pathParts.length - 1]);
-    const key = mapboxId.replace(/-/g, ' ');
+    const key = mapboxId.replace(/-/g, " ");
     const location = findMockLocation(key);
 
     route.fulfill({
       status: 200,
-      contentType: 'application/json',
+      contentType: "application/json",
       body: JSON.stringify({
-        type: 'FeatureCollection',
+        type: "FeatureCollection",
         features: [
           {
-            type: 'Feature',
+            type: "Feature",
             geometry: {
-              type: 'Point',
+              type: "Point",
               coordinates: location.coordinates,
             },
             properties: {
@@ -97,7 +97,7 @@ export async function mockMapboxSearchAPI(page: Page): Promise<void> {
             },
           },
         ],
-        attribution: 'mocked',
+        attribution: "mocked",
       }),
     });
   });
