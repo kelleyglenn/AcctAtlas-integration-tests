@@ -44,6 +44,15 @@ export const SEED_VIDEOS = {
     city: 'Silverthorne',
     state: 'CO',
   },
+  UTICA_SECURITY: {
+    id: '10000000-0000-0000-0000-000000000004',
+    youtubeId: 'AJi0LgnoIJA',
+    title: 'Utica Michigan Police Confrontation',
+    amendments: ['FIRST', 'FOURTH'],
+    participants: ['POLICE', 'SECURITY'],
+    city: 'Fremont',
+    state: 'CA',
+  },
 } as const;
 
 /** Known user IDs from dev seed data */

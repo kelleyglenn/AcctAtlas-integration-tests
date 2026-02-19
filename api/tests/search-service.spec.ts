@@ -62,6 +62,23 @@ test.describe('Search Service API', () => {
       }
     });
 
+    test('supports SECURITY participant filter', async ({ request }) => {
+      const response = await request.get(`${API_URL}/search`, {
+        params: {
+          participants: 'SECURITY',
+        },
+      });
+
+      expect(response.ok()).toBeTruthy();
+      const body = await response.json();
+
+      expect(body.results).toBeInstanceOf(Array);
+      // All results should have SECURITY participant if any exist
+      for (const result of body.results) {
+        expect(result.participants).toContain('SECURITY');
+      }
+    });
+
     test('supports state filter', async ({ request }) => {
       const response = await request.get(`${API_URL}/search`, {
         params: {
