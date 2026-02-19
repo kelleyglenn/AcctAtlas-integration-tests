@@ -1,6 +1,6 @@
 import { test, expect } from '@playwright/test';
 import { createTestUser, loginViaUI } from '../../fixtures/test-data';
-import { PAGE_LOAD_TIMEOUT, UI_INTERACTION_TIMEOUT } from '../../fixtures/test-constants';
+import { PAGE_LOAD_TIMEOUT } from '../../fixtures/test-constants';
 
 test.describe('Hero Landing Page', () => {
   test.describe('Hero Section', () => {
@@ -103,7 +103,7 @@ test.describe('Hero Landing Page', () => {
   });
 
   test.describe('Navigation', () => {
-    test('"Explore the Map" CTA navigates to /map', async ({ page, browserName }) => {
+    test('"Explore the Map" CTA navigates to /map', async ({ page }) => {
       await page.goto('/');
 
       // Click the first "Explore the Map" link (in hero section)
