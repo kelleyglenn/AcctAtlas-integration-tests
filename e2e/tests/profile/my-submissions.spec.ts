@@ -27,8 +27,8 @@ test.describe('My Submissions', () => {
 
     // Assert: submissions section exists with status badge elements
     await expect(page.getByText(/my submissions/i)).toBeVisible({ timeout: PAGE_LOAD_TIMEOUT });
-    const submissions = page.locator('[data-testid="submission-item"]');
     // For a new user with no submissions, the list should be empty
     // This test verifies the section renders; status badges tested when videos exist
+    await expect(page.locator('[data-testid="submission-item"]')).toHaveCount(0);
   });
 });

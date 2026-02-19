@@ -320,7 +320,7 @@ test.describe('Video Service API', () => {
           expect(listResponse.ok()).toBeTruthy();
           const listBody = await listResponse.json();
           // Video should be PENDING (no rejection reason yet)
-          const found = listBody.content.find((v: any) => v.id === video.id);
+          const found = listBody.content.find((v: { id: string }) => v.id === video.id);
           expect(found).toBeDefined();
           expect(found.status).toBe('PENDING');
           // rejectionReason should be null for non-rejected videos
