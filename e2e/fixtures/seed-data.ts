@@ -46,6 +46,16 @@ export const SEED_VIDEOS = {
   },
 } as const;
 
+/** Known user IDs from dev seed data */
+export const SEED_USERS = {
+  /** "Trusted User" who submitted all 10 seed videos (8 approved, 2 rejected) */
+  TRUSTED_SUBMITTER: {
+    id: '00000000-0000-0000-0000-000000000003',
+    displayName: 'Trusted User',
+    trustTier: 'TRUSTED',
+  },
+} as const;
+
 /** Non-existent ID for 404 tests */
 export const NON_EXISTENT_VIDEO_ID = '00000000-0000-0000-0000-000000000000';
 

@@ -2,6 +2,7 @@
 import { test, expect } from '@playwright/test';
 import { SEED_VIDEOS } from '../../fixtures/seed-data';
 import { PAGE_LOAD_TIMEOUT, UI_INTERACTION_TIMEOUT } from '../../fixtures/test-constants';
+import { mockMapboxSearchAPI } from '../../fixtures/mapbox-search-mock';
 
 test.describe('Map Browse', () => {
   test('map page loads with video markers', async ({ page, browserName }) => {
@@ -112,7 +113,8 @@ test.describe('Map Browse', () => {
   });
 
   test('location search flies to location and shows toast', async ({ page, browserName }) => {
-    // Arrange: go to map
+    // Arrange: mock Mapbox Search API to avoid consuming search sessions
+    await mockMapboxSearchAPI(page);
     await page.goto('/map');
     if (browserName !== 'chromium') {
       await page.waitForTimeout(1000);
@@ -136,7 +138,8 @@ test.describe('Map Browse', () => {
   });
 
   test('panning map updates video list based on visible area', async ({ page, browserName }) => {
-    // Arrange: go to map and wait for initial load
+    // Arrange: mock Mapbox Search API to avoid consuming search sessions
+    await mockMapboxSearchAPI(page);
     await page.goto('/map');
     if (browserName !== 'chromium') {
       await page.waitForTimeout(1000);

@@ -270,99 +270,223 @@ test.describe('User Service API', () => {
   test.describe('Update Current User Profile', () => {
     test('requires authentication', async ({ request }) => {
       const response = await request.put(`${API_URL}/users/me`, {
-        data: {
-          displayName: 'Updated Name',
-        },
+        data: { displayName: 'Updated Name' },
       });
-
       expect([401, 403]).toContain(response.status());
     });
 
-    // TODO: Profile update endpoint returns 500
-    // See: https://github.com/kelleyglenn/AcctAtlas-user-service/issues/24
-    test.skip('updates display name', async ({ request }) => {
+    test('updates display name', async ({ request }) => {
       const user = await createTestUser(request);
-      const newDisplayName = `Updated Name ${Date.now()}`;
+      const newName = `Updated ${Date.now()}`;
 
       const response = await request.put(`${API_URL}/users/me`, {
-        data: {
-          displayName: newDisplayName,
-        },
+        data: { displayName: newName },
         headers: authHeaders(user.accessToken),
       });
 
       expect(response.ok()).toBeTruthy();
       const body = await response.json();
-
-      expect(body.displayName).toBe(newDisplayName);
+      expect(body.displayName).toBe(newName);
     });
 
-    // TODO: Profile update endpoint returns 500
-    // See: https://github.com/kelleyglenn/AcctAtlas-user-service/issues/24
-    test.skip('updates avatar URL', async ({ request }) => {
+    test('updates avatar URL', async ({ request }) => {
       const user = await createTestUser(request);
-      const avatarUrl = 'https://example.com/avatar.jpg';
 
       const response = await request.put(`${API_URL}/users/me`, {
-        data: {
-          avatarUrl,
-        },
+        data: { avatarUrl: 'https://gravatar.com/avatar/test123' },
         headers: authHeaders(user.accessToken),
       });
 
       expect(response.ok()).toBeTruthy();
       const body = await response.json();
-
-      expect(body.avatarUrl).toBe(avatarUrl);
+      expect(body.avatarUrl).toBe('https://gravatar.com/avatar/test123');
     });
 
-    // TODO: Profile update endpoint returns 500 instead of 400
-    // See: https://github.com/kelleyglenn/AcctAtlas-user-service/issues/24
-    test.skip('validates display name length', async ({ request }) => {
+    test('supports partial updates (preserves other fields)', async ({ request }) => {
       const user = await createTestUser(request);
 
       const response = await request.put(`${API_URL}/users/me`, {
-        data: {
-          displayName: 'X', // Too short
-        },
+        data: { displayName: 'Partial Update' },
+        headers: authHeaders(user.accessToken),
+      });
+
+      expect(response.ok()).toBeTruthy();
+      const body = await response.json();
+      expect(body.displayName).toBe('Partial Update');
+      expect(body.email).toBe(user.email); // Unchanged
+    });
+
+    test('validates display name minimum length', async ({ request }) => {
+      const user = await createTestUser(request);
+
+      const response = await request.put(`${API_URL}/users/me`, {
+        data: { displayName: 'X' }, // Too short (min 2)
         headers: authHeaders(user.accessToken),
       });
 
       expect(response.status()).toBe(400);
     });
-  });
 
-  test.describe('Get User Public Profile', () => {
-    test('requires authentication', async ({ request }) => {
-      const response = await request.get(`${API_URL}/users/00000000-0000-0000-0000-000000000000`);
-
-      expect([401, 403]).toContain(response.status());
-    });
-
-    test('returns public profile for existing user', async ({ request }) => {
+    test('updates social links', async ({ request }) => {
       const user = await createTestUser(request);
 
-      const response = await request.get(`${API_URL}/users/${user.id}`, {
+      const response = await request.put(`${API_URL}/users/me`, {
+        data: {
+          socialLinks: {
+            youtube: 'UCtest123',
+            instagram: 'testhandle',
+          },
+        },
         headers: authHeaders(user.accessToken),
       });
 
       expect(response.ok()).toBeTruthy();
       const body = await response.json();
-
-      expect(body.id).toBe(user.id);
-      expect(body.displayName).toBe(user.displayName);
-      expect(body.trustTier).toBe('NEW');
-      // Public profile should NOT include email
-      expect(body.email).toBeUndefined();
+      expect(body.socialLinks.youtube).toBe('UCtest123');
+      expect(body.socialLinks.instagram).toBe('testhandle');
     });
 
-    test('returns 404 for non-existent user', async ({ request }) => {
+    test('updates privacy settings', async ({ request }) => {
       const user = await createTestUser(request);
 
-      const response = await request.get(`${API_URL}/users/00000000-0000-0000-0000-000000000000`, {
+      const response = await request.put(`${API_URL}/users/me`, {
+        data: {
+          privacySettings: {
+            socialLinksVisibility: 'PUBLIC',
+            submissionsVisibility: 'REGISTERED',
+          },
+        },
         headers: authHeaders(user.accessToken),
       });
 
+      expect(response.ok()).toBeTruthy();
+      const body = await response.json();
+      expect(body.privacySettings.socialLinksVisibility).toBe('PUBLIC');
+      expect(body.privacySettings.submissionsVisibility).toBe('REGISTERED');
+    });
+
+    test('clears social link field when updated to empty string', async ({ request }) => {
+      const user = await createTestUser(request);
+
+      // Set initial value
+      await request.put(`${API_URL}/users/me`, {
+        data: { socialLinks: { youtube: 'UCtest123' } },
+        headers: authHeaders(user.accessToken),
+      });
+
+      // Clear it by sending empty string
+      const response = await request.put(`${API_URL}/users/me`, {
+        data: { socialLinks: { youtube: '' } },
+        headers: authHeaders(user.accessToken),
+      });
+
+      expect(response.ok()).toBeTruthy();
+      const body = await response.json();
+      expect(body.socialLinks?.youtube).toBeUndefined();
+    });
+
+    test('returns field-level validation errors for invalid input', async ({ request }) => {
+      const user = await createTestUser(request);
+
+      const response = await request.put(`${API_URL}/users/me`, {
+        data: { displayName: 'X' }, // Too short (min 2)
+        headers: authHeaders(user.accessToken),
+      });
+
+      expect(response.status()).toBe(400);
+      const body = await response.json();
+      expect(body.code).toBe('VALIDATION_ERROR');
+      expect(body.details).toBeDefined();
+      expect(body.details.length).toBeGreaterThan(0);
+      expect(body.details[0].field).toBeDefined();
+      expect(body.details[0].message).toBeDefined();
+    });
+
+    test('GET /users/me returns social links and privacy settings', async ({ request }) => {
+      const user = await createTestUser(request);
+
+      // Update social links first
+      await request.put(`${API_URL}/users/me`, {
+        data: { socialLinks: { youtube: 'UCtest456' } },
+        headers: authHeaders(user.accessToken),
+      });
+
+      // GET should return them
+      const response = await request.get(`${API_URL}/users/me`, {
+        headers: authHeaders(user.accessToken),
+      });
+
+      expect(response.ok()).toBeTruthy();
+      const body = await response.json();
+      expect(body.socialLinks.youtube).toBe('UCtest456');
+      expect(body.privacySettings).toBeDefined();
+    });
+  });
+
+  test.describe('Get User Public Profile', () => {
+    test('returns public profile fields', async ({ request }) => {
+      const user = await createTestUser(request);
+
+      const response = await request.get(`${API_URL}/users/${user.id}`);
+
+      expect(response.ok()).toBeTruthy();
+      const body = await response.json();
+      expect(body.displayName).toBeDefined();
+      expect(body.memberSince).toBeDefined();
+      // Should NOT expose private fields
+      expect(body.email).toBeUndefined();
+      expect(body.trustTier).toBeUndefined();
+      expect(body.privacySettings).toBeUndefined();
+    });
+
+    test('hides social links from anonymous when visibility is REGISTERED', async ({ request }) => {
+      const user = await createTestUser(request);
+
+      // Set social links with REGISTERED visibility (default)
+      await request.put(`${API_URL}/users/me`, {
+        data: { socialLinks: { youtube: 'UCprivate' } },
+        headers: authHeaders(user.accessToken),
+      });
+
+      // Anonymous request should not see social links
+      const response = await request.get(`${API_URL}/users/${user.id}`);
+      const body = await response.json();
+      expect(body.socialLinks).toBeUndefined();
+    });
+
+    test('shows social links to registered user when visibility is REGISTERED', async ({ request }) => {
+      const user1 = await createTestUser(request);
+      const user2 = await createTestUser(request);
+
+      // User1 sets social links (default REGISTERED visibility)
+      await request.put(`${API_URL}/users/me`, {
+        data: { socialLinks: { youtube: 'UCvisible' } },
+        headers: authHeaders(user1.accessToken),
+      });
+
+      // User2 (registered) should see them
+      const response = await request.get(`${API_URL}/users/${user1.id}`, {
+        headers: authHeaders(user2.accessToken),
+      });
+      const body = await response.json();
+      expect(body.socialLinks.youtube).toBe('UCvisible');
+    });
+
+    test('shows trustTier to authenticated viewer', async ({ request }) => {
+      const user1 = await createTestUser(request);
+      const user2 = await createTestUser(request);
+
+      const response = await request.get(`${API_URL}/users/${user1.id}`, {
+        headers: authHeaders(user2.accessToken),
+      });
+
+      expect(response.ok()).toBeTruthy();
+      const body = await response.json();
+      expect(body.trustTier).toBe('NEW');
+    });
+
+    test('returns 404 for non-existent user', async ({ request }) => {
+      const response = await request.get(`${API_URL}/users/00000000-0000-0000-0000-000000000099`);
       expect(response.status()).toBe(404);
     });
   });
