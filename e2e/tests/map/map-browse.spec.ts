@@ -345,4 +345,94 @@ test.describe("Map Browse", () => {
       page.locator('[data-testid="video-list-item"]').first(),
     ).toBeVisible({ timeout: UI_INTERACTION_TIMEOUT });
   });
+
+  test("popup thumbnail links to video detail page", async ({
+    page,
+    browserName,
+  }) => {
+    // Arrange: go to map and click video in list to show popup
+    await page.goto("/map");
+    if (browserName !== "chromium") {
+      await page.waitForTimeout(1000);
+    }
+
+    const videoList = page.locator('[data-testid="video-list-item"]');
+    await expect(videoList.first()).toBeVisible({ timeout: PAGE_LOAD_TIMEOUT });
+    await videoList.first().click();
+
+    // Wait for popup to appear
+    await expect(page.getByRole("link", { name: /View Video/i })).toBeVisible({
+      timeout: UI_INTERACTION_TIMEOUT,
+    });
+
+    // Act: click the popup thumbnail image
+    const popup = page.locator(".video-info-popup");
+    const popupThumbnail = popup.locator("img");
+    await expect(popupThumbnail).toBeVisible();
+    await popupThumbnail.click();
+
+    // Assert: navigated to video detail page
+    await expect(page).toHaveURL(/\/videos\/[a-f0-9-]+/, {
+      timeout: PAGE_LOAD_TIMEOUT,
+    });
+  });
+
+  test("popup shows participant type chips", async ({
+    page,
+    browserName,
+  }) => {
+    // Arrange: go to map and click video in list to show popup
+    await page.goto("/map");
+    if (browserName !== "chromium") {
+      await page.waitForTimeout(1000);
+    }
+
+    const videoList = page.locator('[data-testid="video-list-item"]');
+    await expect(videoList.first()).toBeVisible({ timeout: PAGE_LOAD_TIMEOUT });
+    await videoList.first().click();
+
+    // Wait for popup to appear
+    await expect(page.getByRole("link", { name: /View Video/i })).toBeVisible({
+      timeout: UI_INTERACTION_TIMEOUT,
+    });
+
+    // Assert: popup shows participant type chips (not just a count)
+    const popup = page.locator(".video-info-popup");
+    // Seed data videos have participant types like Police, Government, etc.
+    // Use span locator to target chip elements specifically (avoid matching title text)
+    const chips = popup.locator("span").filter({
+      hasText: /^(Police|Government|Business|Citizen|Security)$/,
+    });
+    await expect(chips.first()).toBeVisible({ timeout: UI_INTERACTION_TIMEOUT });
+    // Verify at least one chip is present
+    const chipCount = await chips.count();
+    expect(chipCount).toBeGreaterThan(0);
+  });
+
+  test("popup has custom close button", async ({ page, browserName }) => {
+    // Arrange: go to map and click video in list to show popup
+    await page.goto("/map");
+    if (browserName !== "chromium") {
+      await page.waitForTimeout(1000);
+    }
+
+    const videoList = page.locator('[data-testid="video-list-item"]');
+    await expect(videoList.first()).toBeVisible({ timeout: PAGE_LOAD_TIMEOUT });
+    await videoList.first().click();
+
+    // Wait for popup to appear
+    await expect(page.getByRole("link", { name: /View Video/i })).toBeVisible({
+      timeout: UI_INTERACTION_TIMEOUT,
+    });
+
+    // Act: click the custom close button
+    const closeButton = page.getByRole("button", { name: /Close popup/i });
+    await expect(closeButton).toBeVisible();
+    await closeButton.click();
+
+    // Assert: popup is closed
+    await expect(
+      page.getByRole("link", { name: /View Video/i }),
+    ).not.toBeVisible({ timeout: UI_INTERACTION_TIMEOUT });
+  });
 });
