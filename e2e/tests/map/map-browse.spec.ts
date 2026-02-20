@@ -279,7 +279,7 @@ test.describe("Map Browse", () => {
     await expect(thumbnail).toBeVisible({ timeout: UI_INTERACTION_TIMEOUT });
     await expect(thumbnail).toHaveAttribute(
       "src",
-      /img\.youtube\.com\/vi\/.+\/mqdefault\.jpg/,
+      /(img\.youtube\.com|i\.ytimg\.com)\/vi\/.+\/.+\.jpg/,
     );
   });
 
@@ -305,7 +305,7 @@ test.describe("Map Browse", () => {
     await expect(popupThumbnail).toBeVisible();
     await expect(popupThumbnail).toHaveAttribute(
       "src",
-      /img\.youtube\.com\/vi\/.+\/mqdefault\.jpg/,
+      /(img\.youtube\.com|i\.ytimg\.com)\/vi\/.+\/.+\.jpg/,
     );
   });
 
