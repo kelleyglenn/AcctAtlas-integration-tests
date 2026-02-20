@@ -260,6 +260,55 @@ test.describe("Map Browse", () => {
     });
   });
 
+  test("video list items display YouTube thumbnails", async ({
+    page,
+    browserName,
+  }) => {
+    // Arrange: go to map
+    await page.goto("/map");
+    if (browserName !== "chromium") {
+      await page.waitForTimeout(1000);
+    }
+
+    // Wait for video list to load
+    const videoList = page.locator('[data-testid="video-list-item"]');
+    await expect(videoList.first()).toBeVisible({ timeout: PAGE_LOAD_TIMEOUT });
+
+    // Assert: first video list item contains a thumbnail image from YouTube
+    const thumbnail = videoList.first().locator("img");
+    await expect(thumbnail).toBeVisible({ timeout: UI_INTERACTION_TIMEOUT });
+    await expect(thumbnail).toHaveAttribute(
+      "src",
+      /img\.youtube\.com\/vi\/.+\/mqdefault\.jpg/,
+    );
+  });
+
+  test("video info popup displays thumbnail", async ({ page, browserName }) => {
+    // Arrange: go to map and click video in list to show popup
+    await page.goto("/map");
+    if (browserName !== "chromium") {
+      await page.waitForTimeout(1000);
+    }
+
+    const videoList = page.locator('[data-testid="video-list-item"]');
+    await expect(videoList.first()).toBeVisible({ timeout: PAGE_LOAD_TIMEOUT });
+    await videoList.first().click();
+
+    // Wait for popup to appear
+    await expect(page.getByRole("link", { name: /View Video/i })).toBeVisible({
+      timeout: UI_INTERACTION_TIMEOUT,
+    });
+
+    // Assert: popup contains a thumbnail image from YouTube
+    const popup = page.locator(".video-info-popup");
+    const popupThumbnail = popup.locator("img");
+    await expect(popupThumbnail).toBeVisible();
+    await expect(popupThumbnail).toHaveAttribute(
+      "src",
+      /img\.youtube\.com\/vi\/.+\/mqdefault\.jpg/,
+    );
+  });
+
   test("zooming out transitions from individual markers to clusters", async ({
     page,
     browserName,
