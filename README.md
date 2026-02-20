@@ -4,10 +4,10 @@ End-to-end and API integration tests for [AccountabilityAtlas](https://github.co
 
 ## Test Types
 
-| Type | Location | Purpose | Status |
-|------|----------|---------|--------|
-| E2E | `e2e/` | Full browser-to-database user journeys | Active |
-| API | `api/` | Service contract validation | Active |
+| Type | Location | Purpose                                | Status |
+| ---- | -------- | -------------------------------------- | ------ |
+| E2E  | `e2e/`   | Full browser-to-database user journeys | Active |
+| API  | `api/`   | Service contract validation            | Active |
 
 ## Technology Stack
 
@@ -15,6 +15,7 @@ End-to-end and API integration tests for [AccountabilityAtlas](https://github.co
 - **Language:** TypeScript
 - **Browsers:** Chromium, Firefox, WebKit (E2E only)
 - **Linting:** ESLint with [eslint-plugin-playwright](https://github.com/playwright-community/eslint-plugin-playwright)
+- **Formatting:** [Prettier](https://prettier.io/)
 - **CI:** GitHub Actions
 
 ## Prerequisites
@@ -49,12 +50,17 @@ npm run test:e2e:debug        # Run with debugger
 npm run test:api:debug        # Run API tests with debugger
 ```
 
-### 3. Lint the code
+### 3. Code quality checks
 
 ```bash
+npm run check                 # Run all quality checks (format + lint)
 npm run lint                  # Check for linting errors
 npm run lint:fix              # Auto-fix linting errors
+npm run format                # Auto-format all files with Prettier
+npm run format:check          # Check formatting without modifying files
 ```
+
+> **Tip:** Run `npm run check` before pushing to catch formatting and lint issues that will fail CI.
 
 ### 4. View test reports
 
@@ -81,11 +87,13 @@ npm run test:e2e -- --project=chromium
 ## CI Behavior
 
 Tests run automatically on:
+
 - Push to `master`/`main`
 - Pull requests to `master`/`main`
 - Manual trigger via `workflow_dispatch`
 
 The CI workflow:
+
 1. Spins up the full stack via `docker-compose`
 2. Runs API tests (no browser needed)
 3. Runs E2E tests on Chromium, Firefox, and WebKit
@@ -124,16 +132,17 @@ AcctAtlas-integration-tests/
 
 Tests run in dependency order: health → user-service → other services
 
-| Service | Passing | Skipped | Coverage |
-|---------|---------|---------|----------|
-| Health | 6 | 0 | All service health endpoints |
-| User | 19 | 11 | Registration, login, profile, trust tiers |
-| Location | 9 | 1 | CRUD, spatial queries, clustering |
-| Video | 14 | 0 | CRUD, access control, locations |
-| Moderation | 5 | 0 | Queue access, abuse reports |
-| Search | 8 | 0 | Filters, pagination, public access |
+| Service    | Passing | Skipped | Coverage                                  |
+| ---------- | ------- | ------- | ----------------------------------------- |
+| Health     | 6       | 0       | All service health endpoints              |
+| User       | 19      | 11      | Registration, login, profile, trust tiers |
+| Location   | 9       | 1       | CRUD, spatial queries, clustering         |
+| Video      | 14      | 0       | CRUD, access control, locations           |
+| Moderation | 5       | 0       | Queue access, abuse reports               |
+| Search     | 8       | 0       | Filters, pagination, public access        |
 
 **Skipped tests** are for unimplemented endpoints:
+
 - Token refresh ([#22](https://github.com/kelleyglenn/AcctAtlas-user-service/issues/22))
 - Logout ([#23](https://github.com/kelleyglenn/AcctAtlas-user-service/issues/23))
 - Profile update ([#24](https://github.com/kelleyglenn/AcctAtlas-user-service/issues/24))
@@ -142,11 +151,11 @@ Tests run in dependency order: health → user-service → other services
 
 ### E2E Tests (16 test cases × 3 browsers = 48 test runs)
 
-| Feature | Test Cases | Coverage |
-|---------|------------|----------|
-| Auth | 3 | Login flow (valid/invalid credentials, accessibility) |
-| Map | 7 | Map browsing, markers, filters, search, list interaction |
-| Video | 6 | Video detail page, navigation, YouTube link, 404 |
+| Feature | Test Cases | Coverage                                                 |
+| ------- | ---------- | -------------------------------------------------------- |
+| Auth    | 3          | Login flow (valid/invalid credentials, accessibility)    |
+| Map     | 7          | Map browsing, markers, filters, search, list interaction |
+| Video   | 6          | Video detail page, navigation, YouTube link, 404         |
 
 Tests run on Chromium, Firefox, and WebKit browsers.
 
@@ -157,14 +166,15 @@ See the [Playwright documentation](https://playwright.dev/docs/writing-tests) fo
 ### API Test Patterns
 
 **Using test helpers:**
-```typescript
-import { createTestUser, authHeaders } from '../fixtures/api-helpers';
 
-test('creates a resource', async ({ request }) => {
+```typescript
+import { createTestUser, authHeaders } from "../fixtures/api-helpers";
+
+test("creates a resource", async ({ request }) => {
   const user = await createTestUser(request);
 
   const response = await request.post(`${API_URL}/resources`, {
-    data: { name: 'Test' },
+    data: { name: "Test" },
     headers: authHeaders(user.accessToken),
   });
 
@@ -175,22 +185,25 @@ test('creates a resource', async ({ request }) => {
 ### E2E Test Patterns
 
 **Semantic locators** (layout-resilient):
+
 ```typescript
-await page.getByLabel('Email').fill('test@example.com');
-await page.getByRole('button', { name: /log in/i }).click();
+await page.getByLabel("Email").fill("test@example.com");
+await page.getByRole("button", { name: /log in/i }).click();
 ```
 
 **API-based test setup**:
-```typescript
-import { createTestUser } from '../../fixtures/test-data';
 
-test('example', async ({ page, request }) => {
+```typescript
+import { createTestUser } from "../../fixtures/test-data";
+
+test("example", async ({ page, request }) => {
   const user = await createTestUser(request);
   // ... test with the created user
 });
 ```
 
 **SQL seeds for edge cases**:
+
 ```typescript
 // For states not creatable via API (e.g., moderator users)
 // Run SQL seed before tests, then use known credentials

@@ -4,8 +4,8 @@ SQL scripts for creating test data that cannot be created via the public API.
 
 ## Available Seeds
 
-| File | Purpose | Credentials |
-|------|---------|-------------|
+| File                 | Purpose                       | Credentials                                  |
+| -------------------- | ----------------------------- | -------------------------------------------- |
 | `moderator-user.sql` | Creates a MODERATOR tier user | `moderator@test.local` / `ModeratorPass123!` |
 
 ## Usage

@@ -14,7 +14,10 @@
     "report": "playwright show-report e2e/playwright-report",
     "report:api": "playwright show-report api/playwright-report",
     "lint": "eslint .",
-    "lint:fix": "eslint . --fix"
+    "lint:fix": "eslint . --fix",
+    "format": "prettier --write .",
+    "format:check": "prettier --check .",
+    "check": "npm run format:check && npm run lint"
   },
   "keywords": [
     "e2e",
@@ -29,6 +32,7 @@
     "@typescript-eslint/parser": "^8.54.0",
     "eslint": "^9.39.2",
     "eslint-plugin-playwright": "^2.5.1",
+    "prettier": "^3.8.1",
     "typescript": "^5.9.3",
     "typescript-eslint": "^8.54.0"
   }

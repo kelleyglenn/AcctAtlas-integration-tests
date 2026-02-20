@@ -1,15 +1,17 @@
-import { test, expect } from '@playwright/test';
-import { API_URL, authHeaders } from '../fixtures/api-helpers.js';
+import { test, expect } from "@playwright/test";
+import { API_URL, authHeaders } from "../fixtures/api-helpers.js";
 
-test.describe('Trusted User Auto-Approval', () => {
-  test('video submitted by trusted user is auto-approved', async ({ request }) => {
+test.describe("Trusted User Auto-Approval", () => {
+  test("video submitted by trusted user is auto-approved", async ({
+    request,
+  }) => {
     // 1. Login as the seed trusted user
     const loginRes = await request.post(`${API_URL}/auth/login`, {
-      data: { email: 'trusted@example.com', password: 'password123' },
+      data: { email: "trusted@example.com", password: "password123" },
     });
 
     if (!loginRes.ok()) {
-      test.skip(true, 'Trusted seed user not available');
+      test.skip(true, "Trusted seed user not available");
       return;
     }
 
@@ -21,9 +23,9 @@ test.describe('Trusted User Auto-Approval', () => {
       data: {
         displayName: `API Auto-Approval Location ${Date.now()}`,
         coordinates: { latitude: 40.7128, longitude: -74.006 },
-        city: 'New York',
-        state: 'NY',
-        country: 'USA',
+        city: "New York",
+        state: "NY",
+        country: "USA",
       },
       headers: authHeaders(accessToken),
     });
@@ -33,13 +35,13 @@ test.describe('Trusted User Auto-Approval', () => {
     // 3. Submit a video as the TRUSTED user
     //    Retry to handle race conditions when parallel tests submit
     //    the same URL concurrently.
-    let videoId = '';
+    let videoId = "";
     for (let attempt = 0; attempt < 3; attempt++) {
       const createRes = await request.post(`${API_URL}/videos`, {
         data: {
-          youtubeUrl: 'https://www.youtube.com/watch?v=jNQXAC9IVRw',
-          amendments: ['FIRST'],
-          participants: ['POLICE'],
+          youtubeUrl: "https://www.youtube.com/watch?v=jNQXAC9IVRw",
+          amendments: ["FIRST"],
+          participants: ["POLICE"],
           locationId: location.id,
         },
         headers: authHeaders(accessToken),
@@ -51,7 +53,7 @@ test.describe('Trusted User Auto-Approval', () => {
       } else if (createRes.status() === 409) {
         const userVideosRes = await request.get(
           `${API_URL}/videos/user/${loginBody.user.id}?status=APPROVED`,
-          { headers: authHeaders(accessToken) }
+          { headers: authHeaders(accessToken) },
         );
         expect(userVideosRes.ok()).toBeTruthy();
         const userVideos = await userVideosRes.json();
@@ -65,7 +67,7 @@ test.describe('Trusted User Auto-Approval', () => {
 
     // 4. Wait for auto-approval (async via SQS)
     let approved = false;
-    let videoTitle = '';
+    let videoTitle = "";
     for (let i = 0; i < 10; i++) {
       const detailRes = await request.get(`${API_URL}/videos/${videoId}`, {
         headers: authHeaders(accessToken),
@@ -73,7 +75,7 @@ test.describe('Trusted User Auto-Approval', () => {
       if (detailRes.ok()) {
         const detail = await detailRes.json();
         videoTitle = detail.title;
-        if (detail.status === 'APPROVED') {
+        if (detail.status === "APPROVED") {
           approved = true;
           break;
         }
@@ -91,7 +93,7 @@ test.describe('Trusted User Auto-Approval', () => {
       expect(searchRes.ok()).toBeTruthy();
       const searchBody = await searchRes.json();
       const found = searchBody.results.some(
-        (r: { id: string }) => r.id === videoId
+        (r: { id: string }) => r.id === videoId,
       );
       expect(found).toBe(true);
     }).toPass({ timeout: 60_000, intervals: [2000] });
