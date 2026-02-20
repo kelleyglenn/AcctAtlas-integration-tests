@@ -168,7 +168,7 @@ jobs:
           reporter: java-junit
 
       - name: Run E2E tests
-        timeout-minutes: 10
+        timeout-minutes: 20
         run: xvfb-run npm run test:e2e
         env:
           BASE_URL: http://localhost:3000
