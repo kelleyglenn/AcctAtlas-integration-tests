@@ -377,10 +377,7 @@ test.describe("Map Browse", () => {
     });
   });
 
-  test("popup shows participant type chips", async ({
-    page,
-    browserName,
-  }) => {
+  test("popup shows participant type chips", async ({ page, browserName }) => {
     // Arrange: go to map and click video in list to show popup
     await page.goto("/map");
     if (browserName !== "chromium") {
@@ -403,10 +400,39 @@ test.describe("Map Browse", () => {
     const chips = popup.locator("span").filter({
       hasText: /^(Police|Government|Business|Citizen|Security)$/,
     });
-    await expect(chips.first()).toBeVisible({ timeout: UI_INTERACTION_TIMEOUT });
+    await expect(chips.first()).toBeVisible({
+      timeout: UI_INTERACTION_TIMEOUT,
+    });
     // Verify at least one chip is present
     const chipCount = await chips.count();
     expect(chipCount).toBeGreaterThan(0);
+  });
+
+  test("clicking video marker on map shows popup", async ({
+    page,
+    browserName,
+  }) => {
+    const video = SEED_VIDEOS.SF_FIRST_AMENDMENT;
+
+    // Arrange: navigate to map zoomed in on SF where we know a seed video exists
+    await page.goto(`/map?lat=${video.lat}&lng=${video.lng}&zoom=14`);
+    if (browserName !== "chromium") {
+      await page.waitForTimeout(1000);
+    }
+
+    // Wait for individual video markers to appear at this zoom level
+    const videoMarker = page.locator('[data-testid="video-marker"]');
+    await expect(videoMarker.first()).toBeVisible({
+      timeout: PAGE_LOAD_TIMEOUT,
+    });
+
+    // Act: click the video marker directly on the map
+    await videoMarker.first().click({ force: true });
+
+    // Assert: popup appears with View Video link
+    await expect(page.getByRole("link", { name: /View Video/i })).toBeVisible({
+      timeout: UI_INTERACTION_TIMEOUT,
+    });
   });
 
   test("popup has custom close button", async ({ page, browserName }) => {
