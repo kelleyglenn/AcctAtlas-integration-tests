@@ -87,7 +87,8 @@ test.describe("Video Auto-fill with AI", () => {
     ).toBeEnabled({ timeout: 30_000 });
 
     // Verify success toast appeared (not an error toast)
-    await expect(page.getByText("AI suggestions applied")).toBeVisible({
+    // Use period to distinguish toast ("applied.") from review banner ("applied —")
+    await expect(page.getByText("AI suggestions applied.")).toBeVisible({
       timeout: UI_INTERACTION_TIMEOUT,
     });
   });
