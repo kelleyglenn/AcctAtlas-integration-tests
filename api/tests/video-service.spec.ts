@@ -360,14 +360,16 @@ test.describe("Video Service API", () => {
 
           expect(listResponse.ok()).toBeTruthy();
           const listBody = await listResponse.json();
-          // Video should be PENDING (no rejection reason yet)
+          // Video should be PENDING with no rejection reason.
+          // Jackson non_null config omits null fields, so rejectionReason
+          // is absent rather than explicitly null.
           const found = listBody.content.find(
             (v: { id: string }) => v.id === video.id,
           );
           expect(found).toMatchObject({
             status: "PENDING",
-            rejectionReason: null,
           });
+          expect(found.rejectionReason).toBeUndefined();
         }
         // If 409, video already exists from a prior run — test is still valid:
         // the schema test (rejectionReason field) was verified in a previous run
