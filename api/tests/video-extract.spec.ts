@@ -57,7 +57,10 @@ test.describe("Video Metadata Extraction", () => {
         headers: authHeaders(user.accessToken),
       });
 
-      expect(response.ok()).toBeTruthy();
+      expect(
+        response.status(),
+        `Expected 2xx but got ${response.status()}: ${await response.text()}`,
+      ).toBe(200);
       const body = await response.json();
 
       // Validate response shape — do NOT assert specific values (non-deterministic)

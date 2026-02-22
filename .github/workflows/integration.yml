@@ -199,6 +199,11 @@ jobs:
           path: e2e/results.xml
           reporter: java-junit
 
+      - name: Dump service logs on failure
+        if: failure()
+        working-directory: infra
+        run: docker compose --profile backend logs --tail=200
+
       - name: Stop services
         if: always()
         working-directory: infra
