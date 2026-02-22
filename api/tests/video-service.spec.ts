@@ -228,7 +228,10 @@ test.describe("Video Service API", () => {
             return;
           }
 
-          expect(response.ok()).toBeTruthy();
+          expect(
+            response.status(),
+            `Expected 2xx but got ${response.status()}: ${await response.text()}`,
+          ).toBe(201);
           const video = await response.json();
 
           // Auto-approval is async via SQS (video-service -> moderation-service -> video-service).
