@@ -155,9 +155,7 @@ test.describe("User Service API", () => {
   });
 
   test.describe("Token Refresh", () => {
-    // TODO: Token refresh endpoint not yet implemented
-    // See: https://github.com/kelleyglenn/AcctAtlas-user-service/issues/22
-    test.skip("refreshes tokens with valid refresh token", async ({
+    test("refreshes tokens with valid refresh token", async ({
       request,
     }) => {
       // Register to get initial tokens
@@ -189,9 +187,7 @@ test.describe("User Service API", () => {
       expect(body.tokens.refreshToken).not.toBe(refreshToken);
     });
 
-    // TODO: Token refresh endpoint not yet implemented
-    // See: https://github.com/kelleyglenn/AcctAtlas-user-service/issues/22
-    test.skip("rejects invalid refresh token", async ({ request }) => {
+    test("rejects invalid refresh token", async ({ request }) => {
       const response = await request.post(`${API_URL}/auth/refresh`, {
         data: {
           refreshToken: "invalid-refresh-token",
@@ -201,9 +197,7 @@ test.describe("User Service API", () => {
       expect(response.status()).toBe(401);
     });
 
-    // TODO: Token refresh endpoint not yet implemented
-    // See: https://github.com/kelleyglenn/AcctAtlas-user-service/issues/22
-    test.skip("rejects reused refresh token", async ({ request }) => {
+    test("rejects reused refresh token", async ({ request }) => {
       // Register to get initial tokens
       const userData = {
         email: `reuse-test-${Date.now()}@example.com`,
