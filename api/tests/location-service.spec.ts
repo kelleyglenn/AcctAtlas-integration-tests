@@ -98,28 +98,11 @@ test.describe("Location Service API", () => {
 
   test.describe("List Locations (Bounding Box)", () => {
     test("returns locations within bounding box", async ({ request }) => {
-      const user = await createTestUser(request);
-
-      // Create a location with specific coordinates we can verify
-      const testLat = 33.45;
-      const testLng = -112.07;
-      const createdLocation = await createTestLocation(
-        request,
-        user.accessToken,
-        {
-          displayName: `Phoenix Test Location ${Date.now()}`,
-          latitude: testLat,
-          longitude: testLng,
-          city: "Phoenix",
-          state: "AZ",
-        },
-      );
-      createdLocationIds.push(createdLocation.id);
-
-      // Query with bounding box that definitely includes our test location
+      // Query SF Bay Area bounding box — seed data locations have video_count > 0
+      // (locations with zero approved videos are filtered out)
       const response = await request.get(`${API_URL}/locations`, {
         params: {
-          bbox: "-112.2,33.3,-111.9,33.6", // minLng,minLat,maxLng,maxLat
+          bbox: "-122.6,37.2,-121.8,38.0", // minLng,minLat,maxLng,maxLat (SF Bay Area)
         },
       });
 
@@ -129,9 +112,10 @@ test.describe("Location Service API", () => {
       expect(body.locations).toBeInstanceOf(Array);
       expect(body.count).toBeGreaterThanOrEqual(1);
 
-      // Verify our specific location is in the results
+      // Verify seed location "San Francisco City Hall" is in the results
       const found = body.locations.some(
-        (loc: { id: string }) => loc.id === createdLocation.id,
+        (loc: { id: string }) =>
+          loc.id === "20000000-0000-0000-0000-000000000001",
       );
       expect(found).toBeTruthy();
     });
