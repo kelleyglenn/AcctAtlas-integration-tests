@@ -178,6 +178,161 @@ test.describe("Search Service API", () => {
     });
   });
 
+  test.describe("Search Cluster Endpoint", () => {
+    test("returns clusters for US bounding box", async ({ request }) => {
+      const response = await request.get(`${API_URL}/search/cluster`, {
+        params: {
+          bbox: "-125,24,-66,50",
+          zoom: 5,
+        },
+      });
+
+      expect(response.ok()).toBeTruthy();
+      const body = await response.json();
+
+      expect(body.clusters).toBeInstanceOf(Array);
+      expect(body.totalLocations).toBeGreaterThanOrEqual(0);
+      expect(body.zoom).toBe(5);
+
+      // Each cluster should have required fields
+      for (const cluster of body.clusters) {
+        expect(cluster.id).toBeDefined();
+        expect(cluster.coordinates.latitude).toBeDefined();
+        expect(cluster.coordinates.longitude).toBeDefined();
+        expect(cluster.count).toBeGreaterThanOrEqual(1);
+        expect(cluster.bounds).toBeDefined();
+      }
+    });
+
+    test("cluster counts decrease with amendment filter", async ({
+      request,
+    }) => {
+      const unfiltered = await request.get(`${API_URL}/search/cluster`, {
+        params: {
+          bbox: "-125,24,-66,50",
+          zoom: 5,
+        },
+      });
+      const unfilteredBody = await unfiltered.json();
+
+      const filtered = await request.get(`${API_URL}/search/cluster`, {
+        params: {
+          bbox: "-125,24,-66,50",
+          zoom: 5,
+          amendments: "FOURTH",
+        },
+      });
+      const filteredBody = await filtered.json();
+
+      expect(filtered.ok()).toBeTruthy();
+      expect(filteredBody.totalLocations).toBeLessThanOrEqual(
+        unfilteredBody.totalLocations,
+      );
+    });
+
+    test("cluster counts decrease with participant filter", async ({
+      request,
+    }) => {
+      const unfiltered = await request.get(`${API_URL}/search/cluster`, {
+        params: {
+          bbox: "-125,24,-66,50",
+          zoom: 5,
+        },
+      });
+      const unfilteredBody = await unfiltered.json();
+
+      const filtered = await request.get(`${API_URL}/search/cluster`, {
+        params: {
+          bbox: "-125,24,-66,50",
+          zoom: 5,
+          participants: "GOVERNMENT",
+        },
+      });
+      const filteredBody = await filtered.json();
+
+      expect(filtered.ok()).toBeTruthy();
+      expect(filteredBody.totalLocations).toBeLessThanOrEqual(
+        unfilteredBody.totalLocations,
+      );
+    });
+
+    test("combined filters narrow results further", async ({ request }) => {
+      const amendmentOnly = await request.get(`${API_URL}/search/cluster`, {
+        params: {
+          bbox: "-125,24,-66,50",
+          zoom: 5,
+          amendments: "FIRST",
+        },
+      });
+      const amendmentBody = await amendmentOnly.json();
+
+      const combined = await request.get(`${API_URL}/search/cluster`, {
+        params: {
+          bbox: "-125,24,-66,50",
+          zoom: 5,
+          amendments: "FIRST",
+          participants: "GOVERNMENT",
+        },
+      });
+      const combinedBody = await combined.json();
+
+      expect(combined.ok()).toBeTruthy();
+      expect(combinedBody.totalLocations).toBeLessThanOrEqual(
+        amendmentBody.totalLocations,
+      );
+    });
+
+    test("empty bbox returns empty clusters", async ({ request }) => {
+      // Middle of Pacific Ocean
+      const response = await request.get(`${API_URL}/search/cluster`, {
+        params: {
+          bbox: "170,10,175,15",
+          zoom: 5,
+        },
+      });
+
+      expect(response.ok()).toBeTruthy();
+      const body = await response.json();
+
+      expect(body.clusters).toEqual([]);
+      expect(body.totalLocations).toBe(0);
+    });
+
+    test("invalid bbox returns 400", async ({ request }) => {
+      const response = await request.get(`${API_URL}/search/cluster`, {
+        params: {
+          bbox: "invalid",
+          zoom: 5,
+        },
+      });
+
+      expect(response.status()).toBe(400);
+    });
+
+    test("missing bbox returns error", async ({ request }) => {
+      const response = await request.get(`${API_URL}/search/cluster`, {
+        params: {
+          zoom: 5,
+        },
+      });
+
+      // Spring Security forwards missing param errors to /error which returns 403
+      // (known issue: pre-production fix needed for proper 400 responses)
+      expect(response.ok()).toBeFalsy();
+    });
+
+    test("missing zoom returns error", async ({ request }) => {
+      const response = await request.get(`${API_URL}/search/cluster`, {
+        params: {
+          bbox: "-125,24,-66,50",
+        },
+      });
+
+      // Spring Security forwards missing param errors to /error which returns 403
+      expect(response.ok()).toBeFalsy();
+    });
+  });
+
   test.describe("Search is Public", () => {
     test("does not require authentication", async ({ request }) => {
       // Search should work without auth header
