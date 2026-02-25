@@ -460,11 +460,10 @@ test.describe("Map Browse", () => {
       .getByRole("button", { name: "4th Amendment", exact: true })
       .click();
 
-    // Assert: cluster markers update (count changes or markers disappear/reappear)
+    // Assert: filtering to FOURTH (3 of 12 geolocated seed videos) must reduce clusters
     await expect(async () => {
       const newCount = await clusterMarker.count();
-      // With a restrictive filter, we expect fewer or different clusters
-      expect(newCount).toBeLessThanOrEqual(initialClusterCount);
+      expect(newCount).toBeLessThan(initialClusterCount);
     }).toPass({ timeout: PAGE_LOAD_TIMEOUT });
   });
 
@@ -493,8 +492,11 @@ test.describe("Map Browse", () => {
       .getByRole("button", { name: "4th Amendment", exact: true })
       .click();
 
-    // Wait for filter to take effect
-    await page.waitForTimeout(1000);
+    // Wait for filter to reduce clusters before clearing
+    await expect(async () => {
+      const filteredCount = await clusterMarker.count();
+      expect(filteredCount).toBeLessThan(initialClusterCount);
+    }).toPass({ timeout: PAGE_LOAD_TIMEOUT });
 
     // Clear filters
     await page.getByRole("button", { name: /Clear All/i }).click();
