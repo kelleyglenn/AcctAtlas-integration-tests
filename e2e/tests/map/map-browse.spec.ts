@@ -435,6 +435,79 @@ test.describe("Map Browse", () => {
     });
   });
 
+  test("applying amendment filter updates cluster markers", async ({
+    page,
+    browserName,
+  }) => {
+    // Arrange: go to map at low zoom (clusters visible)
+    await page.goto("/map");
+    if (browserName !== "chromium") {
+      await page.waitForTimeout(1000);
+    }
+
+    // Wait for cluster markers to load
+    const clusterMarker = page.locator('[data-testid="cluster-marker"]');
+    await expect(clusterMarker.first()).toBeVisible({
+      timeout: PAGE_LOAD_TIMEOUT,
+    });
+
+    // Record initial cluster state
+    const initialClusterCount = await clusterMarker.count();
+
+    // Expand filter bar and apply amendment filter
+    await page.getByRole("button", { name: /Filters/i }).click();
+    await page
+      .getByRole("button", { name: "4th Amendment", exact: true })
+      .click();
+
+    // Assert: filtering to FOURTH (3 of 12 geolocated seed videos) must reduce clusters
+    await expect(async () => {
+      const newCount = await clusterMarker.count();
+      expect(newCount).toBeLessThan(initialClusterCount);
+    }).toPass({ timeout: PAGE_LOAD_TIMEOUT });
+  });
+
+  test("clearing filters restores unfiltered clusters", async ({
+    page,
+    browserName,
+  }) => {
+    // Arrange: go to map at low zoom
+    await page.goto("/map");
+    if (browserName !== "chromium") {
+      await page.waitForTimeout(1000);
+    }
+
+    // Wait for cluster markers
+    const clusterMarker = page.locator('[data-testid="cluster-marker"]');
+    await expect(clusterMarker.first()).toBeVisible({
+      timeout: PAGE_LOAD_TIMEOUT,
+    });
+
+    // Record initial state
+    const initialClusterCount = await clusterMarker.count();
+
+    // Apply filter
+    await page.getByRole("button", { name: /Filters/i }).click();
+    await page
+      .getByRole("button", { name: "4th Amendment", exact: true })
+      .click();
+
+    // Wait for filter to reduce clusters before clearing
+    await expect(async () => {
+      const filteredCount = await clusterMarker.count();
+      expect(filteredCount).toBeLessThan(initialClusterCount);
+    }).toPass({ timeout: PAGE_LOAD_TIMEOUT });
+
+    // Clear filters
+    await page.getByRole("button", { name: /Clear All/i }).click();
+
+    // Assert: clusters return to original state
+    await expect(async () => {
+      const restoredCount = await clusterMarker.count();
+      expect(restoredCount).toBe(initialClusterCount);
+    }).toPass({ timeout: PAGE_LOAD_TIMEOUT });
+  });
+
   test("popup has custom close button", async ({ page, browserName }) => {
     // Arrange: go to map and click video in list to show popup
     await page.goto("/map");
